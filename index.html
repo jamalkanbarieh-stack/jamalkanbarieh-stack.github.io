@@ -13,7 +13,10 @@
 <style>
 .nav{display:flex;gap:18px;align-items:center}
 .nav a{color:var(--ink-2);text-decoration:none;font-size:14px}.nav a:hover{color:var(--ink)}
-.brand{font-weight:700;color:var(--navy);text-decoration:none;font-size:15px;letter-spacing:-.01em}
+.topbar{position:relative;justify-content:center !important}
+.nav{gap:28px}
+.nav a{font-size:14.5px;font-weight:500}
+.tb-right{position:absolute;right:16px;top:50%;transform:translateY(-50%)}
 .hero2{padding-top:56px;padding-bottom:28px}
 .hero2 h1{font-size:clamp(32px,5vw,52px);margin:0 0 6px}
 .hero2 .role{font-size:clamp(16px,2vw,20px);color:var(--accent);font-weight:600;margin:0 0 14px}
@@ -61,13 +64,13 @@ h2.sec{font-size:22px;color:var(--navy);margin:40px 0 4px;letter-spacing:-.01em}
 .tl b{display:block;color:var(--ink)}
 .tl span{color:var(--muted);font-size:12.5px}
 .skills li{font-size:12.5px;padding:3px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--ring);color:var(--ink-2)}
-@media (max-width:860px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.caps,.how{grid-template-columns:minmax(0,1fr)}.pgrid,.about2{grid-template-columns:minmax(0,1fr)}.nav a.hide-m{display:none}}
+@media (max-width:860px){.nav{gap:20px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.caps,.how{grid-template-columns:minmax(0,1fr)}.pgrid,.about2{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap">
-  <a class="brand" href="./" id="brand">Jamal Kanbarieh</a>
-  <nav class="nav" aria-label="Main"><a href="#projects">Projects</a><a class="hide-m" href="#capabilities">Capabilities</a><a href="#about">About</a><button class="themebtn" id="themeBtn" type="button" aria-label="Toggle dark mode"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button></nav>
+<header class="top"><div class="wrap topbar">
+  <nav class="nav" aria-label="Main"><a href="#projects">Projects</a><a href="#capabilities">Capabilities</a><a href="#about">About</a></nav>
+  <button class="themebtn tb-right" id="themeBtn" type="button" aria-label="Toggle dark mode"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
 </div></header>
 
 <div class="wrap hero2">
@@ -138,7 +141,7 @@ h2.sec{font-size:22px;color:var(--navy);margin:40px 0 4px;letter-spacing:-.01em}
 <script>
 const state = { role: "all" };
 $("nm").textContent = SITE.name; $("hl").textContent = SITE.headline; $("intro").textContent = SITE.intro;
-document.title = SITE.name + " · Financial Analysis Portfolio"; $("brand").textContent = SITE.name;
+document.title = SITE.name + " · Financial Analysis Portfolio";
 function contactButtons(box, primary) {
   if (SITE.cv) box.appendChild(h("a", { class: "btn" + (primary ? "" : " primary"), href: SITE.cv, download: "", text: "⬇ Download CV" }));
   if (SITE.linkedin) box.appendChild(h("a", { class: "btn", href: SITE.linkedin, target: "_blank", rel: "noopener", text: "LinkedIn ↗" }));
