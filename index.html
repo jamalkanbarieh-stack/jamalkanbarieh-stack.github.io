@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jamal Kanbarieh · Financial Analysis Portfolio</title>
+<meta name="description" content="Interactive financial analysis portfolio of Jamal Kanbarieh: budgeting and variance analysis, bank peer benchmarking, credit scoring and research, built in Power BI and Excel.">
+<meta property="og:title" content="Jamal Kanbarieh · Financial Analysis Portfolio">
+<meta property="og:description" content="Interactive dashboards and models: budgeting & FP&A, bank peer benchmarking, credit scoring, econometric research.">
+<meta property="og:image" content="assets/thumbs/banking-sector.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f2a47'/%3E%3Cpath d='M8 22V14M14 22V9M20 22v-6M26 22V12' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.nav{display:flex;gap:18px;align-items:center}
+.nav a{color:var(--ink-2);text-decoration:none;font-size:14px}.nav a:hover{color:var(--ink)}
+.brand{font-weight:700;color:var(--navy);text-decoration:none;font-size:15px;letter-spacing:-.01em}
+.hero2{padding-top:56px;padding-bottom:28px}
+.hero2 h1{font-size:clamp(32px,5vw,52px);margin:0 0 6px}
+.hero2 .role{font-size:clamp(16px,2vw,20px);color:var(--accent);font-weight:600;margin:0 0 14px}
+.hero2 .lede{font-size:16.5px;max-width:720px}
+.ctas{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:9px;padding:10px 16px;font-weight:600;font-size:14px;text-decoration:none;border:1px solid var(--ring);color:var(--ink);background:var(--surface)}
+.btn.primary{background:var(--navy);color:var(--surface);border-color:var(--navy)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:8px 0 6px}
+.stat{padding:14px 16px}
+.stat b{display:block;font-size:26px;color:var(--navy);letter-spacing:-.01em}
+.stat span{font-size:13px;color:var(--ink-2)}
+h2.sec{font-size:22px;color:var(--navy);margin:40px 0 4px;letter-spacing:-.01em}
+.secsub{color:var(--ink-2);margin:0 0 14px}
+.caps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.cap{padding:16px 18px}
+.cap h3{font-size:15px;margin:0 0 6px}
+.cap p{font-size:13.5px;color:var(--ink-2);margin:0 0 8px}
+.cap .lk{font-size:13px}
+.cap .lk a{margin-right:10px}
+.pgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.pcard{display:flex;flex-direction:column;overflow:hidden;text-decoration:none;color:inherit;transition:transform .12s, box-shadow .12s}
+.pcard:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(15,42,71,.12)}
+.pcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.thumb{aspect-ratio:16/9;background:var(--surface-2);border-bottom:1px solid var(--ring);overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;object-position:top left;display:block}
+.pbody{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.pbody h3{font-size:17px;margin:0;color:var(--navy);line-height:1.3}
+.pbody p{font-size:14px;color:var(--ink-2);margin:0}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.bdg{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--accent)}
+.bdg.x{background:color-mix(in srgb,var(--good) 14%,var(--surface));color:var(--good-ink)}
+.open{margin-top:auto;font-weight:600;font-size:14px;color:var(--accent)}
+.hl{font-size:12.5px;color:var(--muted)}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.how .card{padding:16px 18px}
+.how h3{font-size:14px;margin:0 0 6px}
+.how p{font-size:13.5px;color:var(--ink-2);margin:0}
+.about2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px}
+.about2 .card{padding:18px 20px}
+.about2 p{color:var(--ink-2);margin:0 0 10px}
+.skills{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:6px 0 0;padding:0}
+.tl{list-style:none;margin:0;padding:0 0 0 12px;border-left:2px solid var(--grid)}
+.tl li{margin:0 0 10px;font-size:13.5px;position:relative}
+.tl li::before{content:"";position:absolute;left:-18px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.tl b{display:block;color:var(--ink)}
+.tl span{color:var(--muted);font-size:12.5px}
+.skills li{font-size:12.5px;padding:3px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--ring);color:var(--ink-2)}
+@media (max-width:860px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.caps,.how{grid-template-columns:minmax(0,1fr)}.pgrid,.about2{grid-template-columns:minmax(0,1fr)}.nav a.hide-m{display:none}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="./" id="brand">Jamal Kanbarieh</a>
+  <nav class="nav" aria-label="Main"><a href="#projects">Projects</a><a class="hide-m" href="#capabilities">Capabilities</a><a href="#about">About</a><button class="themebtn" id="themeBtn" type="button" aria-label="Toggle dark mode"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button></nav>
+</div></header>
+
+<div class="wrap hero2">
+  <p class="eyebrow">Financial analysis portfolio</p>
+  <h1 id="nm"></h1>
+  <p class="role" id="hl"></p>
+  <p class="lede" id="intro"></p>
+  <div class="ctas" id="ctas"><a class="btn primary" href="#projects">Explore the projects ↓</a></div>
+</div>
+
+<main class="wrap" style="padding-top:0">
+  <div class="stats">
+    <div class="card stat"><b>5</b><span>interactive projects, no download or login needed</span></div>
+    <div class="card stat"><b>15</b><span>banks benchmarked across 20 financial metrics</span></div>
+    <div class="card stat"><b>240+</b><span>DAX measures across the Power BI models</span></div>
+    <div class="card stat"><b>36</b><span>bank-year panel behind my MBA research</span></div>
+  </div>
+
+  <h2 class="sec" id="projects">Projects</h2>
+  <p class="secsub">Every dashboard is live. Filter, click and hover to explore the analysis yourself.</p>
+  <div class="fl" style="margin-bottom:14px"><span class="flabel">Show</span><div class="chips" id="roleChips"></div></div>
+  <div class="pgrid" id="pgrid"></div>
+
+  <h2 class="sec" id="capabilities">What I bring to the role</h2>
+  <p class="secsub">Mapped to the work each project demonstrates</p>
+  <div class="caps">
+    <div class="card cap"><h3>Budgeting &amp; FP&amp;A</h3><p>Budget vs actual tracking, YTD time intelligence, variance bridges and plain-language commentary for management.</p><div class="lk"><a href="projects/budget-variance/index.html">Budget variance →</a></div></div>
+    <div class="card cap"><h3>Credit &amp; counterparty analysis</h3><p>Scorecard ratings, PD mapping, stress testing and peer comparison of banks for limit setting.</p><div class="lk"><a href="projects/credit-scoring/index.html">Credit model →</a><a href="projects/banking-sector/index.html">Peer benchmark →</a></div></div>
+    <div class="card cap"><h3>Financial statement &amp; ratio analysis</h3><p>Profitability, efficiency, asset quality, liquidity and capital ratios, adjusted for FX revaluation distortions.</p><div class="lk"><a href="projects/banking-sector/index.html">Peer benchmark →</a></div></div>
+    <div class="card cap"><h3>BI &amp; data modelling</h3><p>Power BI star schemas, 100+ measure DAX models, Power Query cleaning of Arabic-language and multi-source data.</p><div class="lk"><a href="projects/thesis/index.html">Thesis model →</a><a href="projects/banking-sector/index.html">Sector model →</a></div></div>
+    <div class="card cap"><h3>Research &amp; statistics</h3><p>Panel regression, hypothesis testing, concentration indices and honest interpretation of the limits of evidence.</p><div class="lk"><a href="projects/thesis/index.html">Research →</a></div></div>
+    <div class="card cap"><h3>Market &amp; risk analytics</h3><p>Trend and momentum indicators, volatility, drawdown and return distributions under extreme market conditions.</p><div class="lk"><a href="projects/stock-technicals/index.html">Stock analysis →</a></div></div>
+  </div>
+
+  <h2 class="sec">How this portfolio was built</h2>
+  <div class="how">
+    <div class="card"><h3>Built in Power BI &amp; Excel</h3><p>Each project started as a Power BI report or Excel model. The web versions recalculate every figure from the original data and DAX logic, so they run in any browser without a Microsoft account.</p></div>
+    <div class="card"><h3>Confidentiality first</h3><p>Only public disclosures are used, and employer-internal material is excluded. Where a project mirrors internal work, as with the budget dashboard, the data is fictional and labelled as such.</p></div>
+    <div class="card"><h3>Transparent methods</h3><p>Every page states its data source, definitions and data-quality caveats, and includes an "About this analysis" section explaining the question, the approach and what was improved.</p></div>
+  </div>
+
+  <h2 class="sec" id="about">About</h2>
+  <div class="about2">
+    <div class="card" id="bio"></div>
+    <div class="card"><h3 style="margin:0 0 6px;font-size:15px">Skills</h3>
+      <ul class="skills"><li>Power BI</li><li>DAX</li><li>Power Query (M)</li><li>Excel financial modelling</li><li>Financial statement &amp; ratio analysis</li><li>Budgeting &amp; variance analysis</li><li>Counterparty credit rating &amp; PD</li><li>IFRS 9 / ECL</li><li>Correspondent banking (Nostro/Vostro)</li><li>KYC (Wolfsberg CBDDQ, FATCA, CRS)</li><li>Valuation (DCF, NPV, IRR)</li><li>Board &amp; ALCO reporting</li><li>Arabic (native) · English (professional)</li></ul>
+      <h3 style="margin:18px 0 8px;font-size:15px">Experience</h3>
+      <ul class="tl">
+        <li><b>Financial Institutions Analyst</b><span>Al Baraka Bank Syria · Treasury &amp; Investment · Jul 2025 – Sep 2026</span></li>
+        <li><b>Budget &amp; Financial Control Analyst</b><span>Bank Al Sharq · Finance Department · Jul 2024 – Jul 2025</span></li>
+        <li><b>Bank Teller</b><span>Banque Bemo Saudi Fransi · Nov 2023 – May 2024</span></li>
+      </ul>
+      <h3 style="margin:14px 0 8px;font-size:15px">Education</h3>
+      <ul class="tl">
+        <li><b>MBA, Financial Management</b><span>Higher Institute of Business Administration (HIBA) · 2026 · 83.55%</span></li>
+        <li><b>BBA, Finance, Investment &amp; Banking</b><span>Arab International University · 2023</span></li>
+        <li><b>Data Analysis Using Power BI &amp; Excel</b><span>Certification of Skill Endorsement · 36 hours · 2025</span></li>
+      </ul>
+      <div class="ctas" id="ctas2"></div>
+    </div>
+  </div>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+
+<script src="assets/common.js"></script>
+<script src="assets/projects.js"></script>
+<script>
+const state = { role: "all" };
+$("nm").textContent = SITE.name; $("hl").textContent = SITE.headline; $("intro").textContent = SITE.intro;
+document.title = SITE.name + " · Financial Analysis Portfolio"; $("brand").textContent = SITE.name;
+function contactButtons(box, primary) {
+  if (SITE.cv) box.appendChild(h("a", { class: "btn" + (primary ? "" : " primary"), href: SITE.cv, download: "", text: "⬇ Download CV" }));
+  if (SITE.linkedin) box.appendChild(h("a", { class: "btn", href: SITE.linkedin, target: "_blank", rel: "noopener", text: "LinkedIn ↗" }));
+  if (SITE.email) box.appendChild(h("a", { class: "btn", href: "mailto:" + SITE.email, text: "✉ Email me" }));
+}
+contactButtons($("ctas"), true); contactButtons($("ctas2"), false);
+const bio = $("bio"); SITE.bio.forEach(p => bio.appendChild(h("p", { text: p }))); if (SITE.location) bio.appendChild(h("p", { class: "small", text: SITE.location }));
+$("foot").textContent = `© ${new Date().getFullYear()} ${SITE.name} · Built from public disclosures and fictional data where noted · Not investment advice`;
+
+function chips() {
+  const c = $("roleChips"); c.replaceChildren();
+  [["all", "All projects"], ...Object.entries(ROLES)].forEach(([k, l]) => { const b = h("button", { type: "button", class: "chip", "aria-pressed": String(state.role === k), text: l }); b.onclick = () => { state.role = k; chips(); cards(); }; c.appendChild(b); });
+}
+function cards() {
+  const g = $("pgrid"); g.replaceChildren();
+  PROJECTS.filter(p => state.role === "all" || p.roles.includes(state.role)).forEach(p => {
+    const img = h("img", { src: `assets/thumbs/${p.slug}.jpg`, alt: `Preview of ${p.title}`, loading: "lazy", width: "720", height: "405" });
+    const badges = h("div", { class: "badges" }, h("span", { class: "bdg", text: "Interactive" }), p.excel ? h("span", { class: "bdg x", text: "Excel download" }) : null, ...p.roles.map(r => h("span", { class: "bdg", text: ROLES[r] })));
+    const a = h("a", { class: "card pcard", href: `projects/${p.slug}/index.html` },
+      h("div", { class: "thumb" }, img),
+      h("div", { class: "pbody" }, badges, h("h3", { text: p.title }), h("p", { text: p.summary }), h("div", { class: "hl", text: p.highlights.join(" · ") }), h("ul", { class: "tags" }, ...p.tags.map(t => h("li", { text: t }))), h("span", { class: "open", text: "Open the dashboard →" })));
+    g.appendChild(a);
+  });
+}
+chips(); cards(); initTheme();
+</script>
+</body>
+</html>

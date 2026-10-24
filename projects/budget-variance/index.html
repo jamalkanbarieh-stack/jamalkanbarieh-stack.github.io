@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Treasury Revenue Variance</title>
+<meta name="description" content="Interactive budget vs actual revenue variance dashboard (FY2020, fictional data) by Jamal Kanbarieh — rebuilt from the original Power BI report.">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="crumb"><a href="../../index.html">Jamal Kanbarieh · Portfolio</a> &nbsp;/&nbsp; <b>Treasury Revenue Variance</b></div>
+  <button class="themebtn" id="themeBtn" type="button" aria-label="Toggle dark mode"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg> Theme</button>
+</div></header>
+
+<div class="wrap hero">
+  <a class="backbtn" href="../../index.html">← Back to portfolio</a>
+  <p class="eyebrow">Budgeting &amp; FP&amp;A · Power BI</p>
+  <h1>Treasury Revenues: Budget vs Actual &amp; Variance Analysis (FY2020)</h1>
+  <p class="lede">Tracks three treasury revenue streams against budget, month by month and year-to-date, in both USD and SYP. It shows where revenue fell short, when it recovered, and which stream drove the gap. Use the filters, click any bar or heat-map cell to drill in, and hover for exact figures.</p>
+  <ul class="tags"><li>Variance analysis</li><li>YTD time intelligence (DAX)</li><li>Multi-currency reporting</li><li>Star schema</li><li>Power Query</li></ul>
+  <div class="note info" role="note"><span aria-hidden="true">ⓘ</span><div><strong>Fictional data:</strong> all figures in this dashboard are fictional. They were created to mirror a real bank budgeting workflow while protecting banking confidentiality. The model structure, DAX logic and analysis approach are the same as in the original work.</div></div>
+</div>
+
+<div class="filters" role="region" aria-label="Filters"><div class="wrap">
+  <div class="fgroup"><span class="flabel">Currency</span>
+    <div class="seg" id="curSeg"><button type="button" data-v="USD" aria-pressed="true">USD</button><button type="button" data-v="SYP" aria-pressed="false">SYP</button></div></div>
+  <div class="fgroup"><span class="flabel">View</span>
+    <div class="seg" id="modeSeg"><button type="button" data-v="ytd" aria-pressed="true">Year-to-date</button><button type="button" data-v="month" aria-pressed="false">Single month</button></div></div>
+  <div class="fgroup"><label class="flabel" for="monthSel" id="monthLbl">Through</label><select id="monthSel"></select></div>
+  <div class="fgroup"><span class="flabel">Streams</span><div class="chips" id="chips"></div></div>
+  <button class="reset" id="resetBtn" type="button">Reset</button>
+</div></div>
+
+<main class="wrap">
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card insights"><h2 id="insTitle">Key findings</h2><ul id="ins"></ul></div>
+
+  <div class="grid2">
+    <div class="card panel">
+      <h2>Budget vs actual by revenue stream</h2>
+      <p class="sub" id="barSub"></p>
+      <div class="legend"><span><i class="sw" style="background:var(--budget)"></i>Budget</span><span><i class="sw" style="background:var(--actual)"></i>Actual</span><span style="color:var(--muted)">Click a stream to isolate it</span></div>
+      <div class="chart" id="bars"></div>
+    </div>
+    <div class="card panel">
+      <h2>Variance bridge: budget to actual</h2>
+      <p class="sub" id="wfSub"></p>
+      <div class="legend"><span><i class="sw" style="background:var(--budget)"></i>Total</span><span><i class="sw" style="background:var(--good)"></i>▲ Favourable</span><span><i class="sw" style="background:var(--bad)"></i>▼ Unfavourable</span></div>
+      <div class="chart" id="wf"></div>
+    </div>
+  </div>
+
+  <div class="card panel full">
+    <h2>Monthly trend and cumulative variance</h2>
+    <p class="sub" id="lineSub"></p>
+    <div class="legend"><span><i class="ln" style="border-color:var(--actual)"></i>Actual</span><span><i class="ln dash" style="border-color:var(--muted)"></i>Budget</span><span><i class="sw" style="background:var(--good)"></i>▲ Cumulative surplus</span><span><i class="sw" style="background:var(--bad)"></i>▼ Cumulative shortfall</span></div>
+    <div class="chart" id="line"></div>
+  </div>
+
+  <div class="card panel full">
+    <h2>Monthly variance % by stream</h2>
+    <p class="sub">(Actual − Budget) ÷ Budget. Click a cell to jump to that month.</p>
+    <div class="tablewrap"><table class="hm" id="hm"></table></div>
+    <div class="scale"><span>Below budget</span><i></i><span>Above budget</span></div>
+    <details class="data"><summary>Show the underlying data table</summary><div class="tablewrap"><table class="raw" id="raw"></table></div></details>
+  </div>
+
+  <section class="about">
+    <div class="card panel">
+      <h2>About this analysis</h2>
+      <p><b>Business question:</b> Is revenue on track against budget, and if not, which stream and which months explain the gap?</p>
+      <p><b>Approach:</b> Monthly budget and actual figures for each currency were combined in Power Query into one fact table, linked to a date dimension (star schema). DAX measures calculate variance, variance %, achievement rate and year-to-date totals (<code>DATESYTD</code>), so every visual responds to the currency, month and stream filters.</p>
+      <p><b>What this view adds:</b> a variance bridge that splits the total gap by stream, a month × stream variance heat map, and automatic findings that update with the filters.</p>
+    </div>
+    <div class="card panel">
+      <h2>Model</h2>
+      <dl>
+        <dt>Tools</dt><dd>Power BI Desktop · Power Query (M) · DAX</dd>
+        <dt>Tables</dt><dd>FactRevenue (144 rows) · DimDate</dd>
+        <dt>Key measures</dt><dd>Budget / Actual Revenue · Variance · Variance % · Achievement Rate · Budget / Actual YTD · Variance YTD</dd>
+        <dt>Period</dt><dd>Jan–Dec 2020 (full year)</dd>
+        <dt>Data</dt><dd>Fictional, for confidentiality</dd>
+      </dl>
+    </div>
+  </section>
+  <a class="backbtn bottom" href="../../index.html">← Back to all projects</a>
+</main>
+
+<footer><div class="wrap">Interactive web version of a Power BI report, built by Jamal Kanbarieh. Figures are fictional and recalculated with the original model's DAX logic.</div></footer>
+
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+const DATA = {"USD":{"Investment revenue":{"budget":[42000,45000,47000,43000,50000,52000,54000,53000,56000,59000,61000,65000],"actual":[40000,42000,45000,46000,48000,50000,52000,54000,55000,57000,59000,63500]},"Capital Market":{"budget":[18000,19000,21000,17000,22000,24000,25000,24500,26000,27500,29000,32000],"actual":[17000,18000,20000,20500,21500,23000,24000,25000,25500,26500,28000,31200]},"Revenue from Operational Position":{"budget":[12000,12500,13000,11500,14500,15000,15500,15000,16500,17500,18500,21000],"actual":[11000,11500,12500,13000,14000,14500,15000,15500,16000,17000,18000,21400]}},"SYP":{"Investment revenue":{"budget":[147000000,157500000,164500000,150500000,175000000,182000000,189000000,185500000,196000000,206500000,213500000,227500000],"actual":[140000000,147000000,157500000,161000000,168000000,175000000,182000000,189000000,192500000,199500000,206500000,222250000]},"Capital Market":{"budget":[63000000,66500000,73500000,59500000,77000000,84000000,87500000,85750000,91000000,96250000,101500000,112000000],"actual":[59500000,63000000,70000000,71750000,75250000,80500000,84000000,87500000,89250000,92750000,98000000,109200000]},"Revenue from Operational Position":{"budget":[42000000,43750000,45500000,40250000,50750000,52500000,54250000,52500000,57750000,61250000,64750000,73500000],"actual":[38500000,40250000,43750000,45500000,49000000,50750000,52500000,54250000,56000000,59500000,63000000,74900000]}}};
+const STREAMS = ["Investment revenue","Capital Market","Revenue from Operational Position"];
+const SHORT = {"Investment revenue":"Investment","Capital Market":"Capital Market","Revenue from Operational Position":"Operational Position"};
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const LAST_ACTUAL = 11; // December
+const SVGNS = "http://www.w3.org/2000/svg";
+const state = {cur:"USD", mode:"ytd", month:LAST_ACTUAL, streams:new Set(STREAMS)};
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function el(tag, attrs={}, parent){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function txt(parent, x, y, s, attrs={}){const t=el("text",Object.assign({x,y,fill:"var(--ink-2)","font-size":12},attrs),parent);t.textContent=s;return t;}
+function fmt(v, cur=state.cur, compact=true){
+  const a=Math.abs(v), sign=v<0?"−":"";
+  let s;
+  if(!compact) s=a.toLocaleString("en-US");
+  else if(a>=1e9) s=(a/1e9).toFixed(2)+"B";
+  else if(a>=1e6) s=(a/1e6).toFixed(a>=1e8?0:a>=1e7?1:2)+"M";
+  else if(a>=1e3) s=(a/1e3).toFixed(a>=1e5?0:1)+"K";
+  else s=a.toFixed(0);
+  return sign+(cur==="USD"?"$":"SYP ")+s;
+}
+const pct = (v,d=1) => (v>0?"+":v<0?"−":"")+Math.abs(v*100).toFixed(d)+"%";
+const pctPlain = v => (v*100).toFixed(1)+"%";
+function periodIdx(){ return state.mode==="ytd" ? [...Array(state.month+1).keys()] : [state.month]; }
+function sum(type, streams, idx, cur=state.cur){let t=0;for(const s of streams){const arr=DATA[cur][s][type];for(const i of idx){if(arr[i]!=null)t+=arr[i];}}return t;}
+const sel = () => STREAMS.filter(s=>state.streams.has(s));
+function periodLabel(){return state.mode==="ytd" ? `YTD Jan–${MONTHS[state.month]} 2020` : `${MONTHS[state.month]} 2020`;}
+
+/* tooltip */
+const tip=$("tip");
+function showTip(ev, title, rows){
+  tip.replaceChildren();
+  const t=document.createElement("div");t.className="t";t.textContent=title;tip.appendChild(t);
+  for(const r of rows){
+    const d=document.createElement("div");d.className="r";
+    const l=document.createElement("span");
+    if(r.color){const k=document.createElement("i");k.style.cssText=`width:12px;height:0;border-top:2px ${r.dash?"dashed":"solid"} ${r.color};display:inline-block`;l.appendChild(k);}
+    l.appendChild(document.createTextNode(r.label));
+    const b=document.createElement("b");b.textContent=r.value;if(r.cls)b.className=r.cls;
+    d.append(l,b);tip.appendChild(d);
+  }
+  moveTip(ev);tip.style.opacity=1;
+}
+function moveTip(ev){
+  let x,y;
+  if(ev.clientX!=null && ev.type!=="focus"){x=ev.clientX;y=ev.clientY;}
+  else{const r=ev.target.getBoundingClientRect();x=r.left+r.width/2;y=r.top;}
+  const w=tip.offsetWidth,h=tip.offsetHeight;
+  let lx=x+14, ly=y-h-10;
+  if(lx+w>innerWidth-8) lx=x-w-14;
+  if(ly<8) ly=y+16;
+  tip.style.left=Math.max(8,lx)+"px";tip.style.top=ly+"px";
+}
+const hideTip=()=>tip.style.opacity=0;
+function bindTip(node, fn){
+  node.addEventListener("pointermove",e=>showTip(e,...fn()));
+  node.addEventListener("pointerleave",hideTip);
+  node.addEventListener("focus",e=>showTip(e,...fn()));
+  node.addEventListener("blur",hideTip);
+}
+function niceMax(v){const p=Math.pow(10,Math.floor(Math.log10(v)));const n=v/p;const m=n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10;return m*p;}
+function rr(x,y,w,h,r){ // rect rounded on right end
+  r=Math.min(r,h/2,Math.max(w,0)); if(w<=0) return "";
+  return `M${x},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h-r}Q${x+w},${y+h} ${x+w-r},${y+h}H${x}Z`;
+}
+function rt(x,y,w,h,r){ // rect rounded on top end
+  r=Math.min(r,w/2,Math.max(h,0)); if(h<=0) return "";
+  return `M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`;
+}
+
+/* ---------- controls ---------- */
+function buildControls(){
+  const ms=$("monthSel");
+  MONTHS.slice(0,LAST_ACTUAL+1).forEach((m,i)=>{const o=document.createElement("option");o.value=i;o.textContent=m+" 2020";ms.appendChild(o);});
+  ms.value=state.month;
+  ms.onchange=()=>{state.month=+ms.value;render();};
+  for(const segId of ["curSeg","modeSeg"]){
+    $(segId).querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      $(segId).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+      if(segId==="curSeg")state.cur=b.dataset.v;else state.mode=b.dataset.v;
+      render();
+    });
+  }
+  const chips=$("chips");
+  STREAMS.forEach(s=>{const c=document.createElement("button");c.type="button";c.className="chip";c.dataset.s=s;c.textContent=SHORT[s];c.onclick=()=>toggleStream(s);chips.appendChild(c);});
+  $("resetBtn").onclick=()=>{state.cur="USD";state.mode="ytd";state.month=LAST_ACTUAL;state.streams=new Set(STREAMS);syncControls();render();};
+  $("themeBtn").onclick=()=>{
+    const cur=document.documentElement.getAttribute("data-theme");
+    const dark = cur ? cur==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", dark?"light":"dark");
+    try{localStorage.setItem("pf-theme",dark?"light":"dark");}catch(e){}
+    render();
+  };
+}
+function toggleStream(s, isolate=false){
+  if(isolate){
+    if(state.streams.size===1 && state.streams.has(s)) state.streams=new Set(STREAMS);
+    else state.streams=new Set([s]);
+  } else {
+    if(state.streams.has(s)){ if(state.streams.size>1) state.streams.delete(s); }
+    else state.streams.add(s);
+  }
+  render();
+}
+function syncControls(){
+  $("curSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===state.cur));
+  $("modeSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===state.mode));
+  $("monthSel").value=state.month;
+  $("monthLbl").textContent=state.mode==="ytd"?"Through":"Month";
+  $("chips").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",state.streams.has(c.dataset.s)));
+}
+
+/* ---------- KPIs ---------- */
+function renderKPIs(){
+  const idx=periodIdx(), S=sel();
+  const b=sum("budget",S,idx), a=sum("actual",S,idx), v=a-b, ach=b?a/b:0;
+  const fy=sum("budget",S,[...Array(12).keys()]), ytdA=sum("actual",S,[...Array(state.month+1).keys()]);
+  const cls=v>=0?"up":"down", arrow=v>=0?"▲":"▼";
+  const items=[
+    {k:"Budget",v:fmt(b),s:periodLabel()},
+    {k:"Actual",v:fmt(a),s:periodLabel()},
+    {k:"Variance",v:fmt(v),s:`${arrow} ${pct(b?v/b:0)} vs budget`,cls},
+    {k:"Achievement",v:pctPlain(ach),s:`FY budget ${fmt(fy)} · ${pctPlain(fy?ytdA/fy:0)} reached`},
+  ];
+  const k=$("kpis");k.replaceChildren();
+  for(const it of items){
+    const d=document.createElement("div");d.className="card kpi";
+    const a1=document.createElement("div");a1.className="k";a1.textContent=it.k;
+    const a2=document.createElement("div");a2.className="v";a2.textContent=it.v;
+    const a3=document.createElement("div");a3.className="s"+(it.cls?" "+it.cls:"");a3.textContent=it.s;
+    d.append(a1,a2,a3);k.appendChild(d);
+  }
+}
+
+/* ---------- insights ---------- */
+function renderInsights(){
+  const idx=periodIdx(), S=sel(), ul=$("ins"); ul.replaceChildren();
+  $("insTitle").textContent=`Key findings · ${periodLabel()} · ${state.cur}`;
+  const add=(parts)=>{const li=document.createElement("li");for(const p of parts){if(typeof p==="string")li.appendChild(document.createTextNode(p));else{const b=document.createElement("b");b.textContent=p.b;li.appendChild(b);}}ul.appendChild(li);};
+  const b=sum("budget",S,idx), a=sum("actual",S,idx), v=a-b;
+  add(["Revenue came in ",{b:`${fmt(Math.abs(v))} ${v>=0?"above":"below"} budget`}," (",{b:pct(b?v/b:0)},`), at ${pctPlain(b?a/b:0)} achievement.`]);
+  if(S.length>1){
+    const vs=S.map(s=>({s,v:sum("actual",[s],idx)-sum("budget",[s],idx),b:sum("budget",[s],idx)})).sort((x,y)=>x.v-y.v);
+    const w=vs[0];
+    if(w.v<0) add([{b:SHORT[w.s]}," drove the largest shortfall: ",{b:fmt(w.v)}," (",pct(w.v/w.b),`), or ${Math.round(Math.abs(w.v)/Math.abs(vs.filter(x=>x.v<0).reduce((t,x)=>t+x.v,0))*100)}% of the total gap.`]);
+    else add(["Every selected stream met or beat budget for this period."]);
+  }
+  // monthly pattern
+  const mv=[...Array(LAST_ACTUAL+1).keys()].map(i=>{const bb=sum("budget",S,[i]),aa=sum("actual",S,[i]);return {i,p:(aa-bb)/bb};});
+  const pos=mv.filter(m=>m.p>0).map(m=>MONTHS[m.i]);
+  const worst=mv.reduce((x,y)=>y.p<x.p?y:x), best=mv.reduce((x,y)=>y.p>x.p?y:x);
+  add(["Across the year, actuals beat budget in ",{b:`${pos.length} of 12 months`},pos.length?` (${pos.join(", ")})`:"",". Weakest month: ",{b:`${MONTHS[worst.i]} (${pct(worst.p)})`},"; strongest: ",{b:`${MONTHS[best.i]} (${pct(best.p)})`},"."]);
+  const fyA=sum("actual",S,[...Array(12).keys()]), fy=sum("budget",S,[...Array(12).keys()]), ga=sum("actual",S,[6,7,8,9,10,11])-sum("budget",S,[6,7,8,9,10,11]), gb=sum("actual",S,[0,1,2,3,4,5])-sum("budget",S,[0,1,2,3,4,5]);
+  add(["Full year 2020 closed at ",{b:fmt(fyA,state.cur,false)}," against a budget of ",{b:fmt(fy,state.cur,false)}," (",{b:pctPlain(fyA/fy)}," achievement). The gap was ",{b:`${fmt(gb)} in H1`}," and ",{b:`${fmt(ga)} in H2`},`, so ${Math.abs(ga)<Math.abs(gb)?"performance improved in the second half":"the shortfall widened in the second half"}.`]);
+}
+
+/* ---------- bars by stream ---------- */
+function renderBars(){
+  const box=$("bars"); box.replaceChildren();
+  const idx=periodIdx(), W=Math.max(300,box.clientWidth), narrow=W<520;
+  const labelW=narrow?0:130, right=96, rowH=narrow?78:62, top=6;
+  const H=top+rowH*STREAMS.length+18;
+  const svg=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Budget versus actual by revenue stream"},box);
+  const rows=STREAMS.map(s=>({s,b:sum("budget",[s],idx),a:sum("actual",[s],idx)}));
+  const max=niceMax(Math.max(...rows.map(r=>Math.max(r.a,r.b))));
+  const x0=labelW, x1=W-right, sx=v=>x0+(x1-x0)*v/max;
+  for(let t=0;t<=4;t++){const x=sx(max*t/4);el("line",{x1:x,x2:x,y1:top,y2:H-18,stroke:"var(--grid)","stroke-width":1},svg);txt(svg,x,H-4,fmt(max*t/4),{"text-anchor":t===0?"start":"middle",fill:"var(--muted)","font-size":11});}
+  rows.forEach((r,i)=>{
+    const on=state.streams.has(r.s), y=top+i*rowH+(narrow?20:8), bh=narrow?17:18;
+    const g=el("g",{class:"hit",tabindex:0,role:"button","aria-label":`${r.s}: budget ${fmt(r.b,state.cur,false)}, actual ${fmt(r.a,state.cur,false)}`,opacity:on?1:.35},svg);
+    el("rect",{x:0,y:y-(narrow?20:8),width:W,height:rowH,fill:"transparent"},g);
+    if(narrow) txt(g,0,y-6,r.s,{fill:"var(--ink)","font-size":12.5});
+    else{ const t=txt(g,0,y+bh+2,SHORT[r.s],{fill:"var(--ink)","font-size":12.5,"dominant-baseline":"middle"}); }
+    el("path",{d:rr(x0,y,sx(r.b)-x0,bh,4),fill:"var(--budget)",class:"mk"},g);
+    el("path",{d:rr(x0,y+bh+2,sx(r.a)-x0,bh,4),fill:"var(--actual)",class:"mk"},g);
+    txt(g,sx(r.b)+6,y+bh/2,fmt(r.b),{"dominant-baseline":"middle","font-size":11.5,fill:"var(--ink-2)"});
+    txt(g,sx(r.a)+6,y+bh+2+bh/2,fmt(r.a),{"dominant-baseline":"middle","font-size":11.5,fill:"var(--ink)","font-weight":600});
+    const p=r.a/r.b-1;
+    txt(g,W,y+bh+1,(p>=0?"▲ ":"▼ ")+pct(p),{"text-anchor":"end","dominant-baseline":"middle","font-size":12,"font-weight":600,fill:p>=0?"var(--good-ink)":"var(--bad-ink)"});
+    bindTip(g,()=>[r.s+" · "+periodLabel(),[
+      {label:"Actual",value:fmt(r.a,state.cur,false),color:css("--actual")},
+      {label:"Budget",value:fmt(r.b,state.cur,false),color:css("--budget")},
+      {label:"Variance",value:`${fmt(r.a-r.b,state.cur,false)} (${pct(p)})`,cls:p>=0?"up":"down"},
+      {label:"Achievement",value:pctPlain(r.a/r.b)}]]);
+    g.addEventListener("click",()=>toggleStream(r.s,true));
+    g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleStream(r.s,true);}});
+  });
+  $("barSub").textContent=`${periodLabel()} · ${state.cur} · faded streams are excluded from the totals`;
+}
+
+/* ---------- waterfall ---------- */
+function renderWaterfall(){
+  const box=$("wf"); box.replaceChildren();
+  const idx=periodIdx(), S=sel(), W=Math.max(300,box.clientWidth), H=250, left=8, bottom=40, top=22;
+  const svg=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Variance bridge from budget to actual"},box);
+  const B=sum("budget",S,idx), A=sum("actual",S,idx);
+  const steps=[{l:"Budget",v:B,total:true}];
+  let run=B;
+  for(const s of S){const d=sum("actual",[s],idx)-sum("budget",[s],idx);steps.push({l:SHORT[s],v:d,from:run,full:s});run+=d;}
+  steps.push({l:"Actual",v:A,total:true});
+  // y-domain: zoom to show variance clearly but keep honest break marker
+  const lows=steps.map(s=>s.total?s.v:Math.min(s.from,s.from+s.v)), highs=steps.map(s=>s.total?s.v:Math.max(s.from,s.from+s.v));
+  const span=Math.max(...highs)-Math.min(...lows.filter((_,i)=>!steps[i].total).concat([A,B]));
+  let yMin=Math.max(0,Math.min(A,B,...lows)-span*1.6); const yMax=Math.max(...highs)+span*0.35;
+  const broken=yMin>0;
+  const sy=v=>top+(H-bottom-top)*(1-(v-yMin)/(yMax-yMin));
+  const n=steps.length, slot=(W-left*2)/n, bw=Math.min(64,slot*0.56);
+  // gridlines
+  for(let t=0;t<=3;t++){const v=yMin+(yMax-yMin)*t/3,y=sy(v);el("line",{x1:left,x2:W-left,y1:y,y2:y,stroke:"var(--grid)"},svg);}
+  steps.forEach((s,i)=>{
+    const cx=left+slot*i+slot/2, x=cx-bw/2;
+    let y0,y1,fill;
+    if(s.total){y0=sy(s.v);y1=H-bottom;fill=s.l==="Actual"?"var(--actual)":"var(--budget)";}
+    else{y0=sy(Math.max(s.from,s.from+s.v));y1=sy(Math.min(s.from,s.from+s.v));fill=s.v>=0?"var(--good)":"var(--bad)";}
+    const g=el("g",{class:"hit",tabindex:0,role:"img","aria-label":`${s.l}: ${fmt(s.v,state.cur,false)}`},svg);
+    el("rect",{x:cx-slot/2,y:top,width:slot,height:H-bottom-top,fill:"transparent"},g);
+    el("rect",{x,y:y0,width:bw,height:Math.max(2,y1-y0),rx:s.total?3:2,fill,class:"mk"},g);
+    // connector
+    if(i<n-1){const next=s.total? s.v : s.from+s.v; const yy=sy(next); el("line",{x1:x+bw,x2:x+slot,y1:yy,y2:yy,stroke:"var(--axis)","stroke-dasharray":"3 3"},svg);}
+    const lab=s.total?fmt(s.v):(s.v>=0?"+":"")+fmt(s.v);
+    txt(g,cx,y0-6,lab,{"text-anchor":"middle","font-size":11.5,"font-weight":s.total?600:500,fill:s.total?"var(--ink)":(s.v>=0?"var(--good-ink)":"var(--bad-ink)")});
+    const words=s.l.split(" ");
+    if(words.length>1 && slot<110){txt(g,cx,H-bottom+16,words[0],{"text-anchor":"middle",fill:"var(--ink-2)"});txt(g,cx,H-bottom+30,words.slice(1).join(" "),{"text-anchor":"middle",fill:"var(--ink-2)"});}
+    else txt(g,cx,H-bottom+18,s.l,{"text-anchor":"middle",fill:"var(--ink-2)"});
+    bindTip(g,()=>[s.total?`${s.l} · ${periodLabel()}`:`${s.full} · variance`,[
+      {label:s.total?s.l:"Variance",value:fmt(s.v,state.cur,false),cls:s.total?"":(s.v>=0?"up":"down")},
+      ...(s.total?[]:[{label:"% of budget",value:pct(s.v/sum("budget",[s.full],idx))}])]]);
+  });
+  el("line",{x1:left,x2:W-left,y1:H-bottom,y2:H-bottom,stroke:"var(--axis)"},svg);
+  if(broken){ // axis-break marker on total bars
+    [0,n-1].forEach(i=>{const cx=left+slot*i+slot/2;const y=H-bottom-10;el("path",{d:`M${cx-bw/2-3},${y+3} l${bw+6},-6 M${cx-bw/2-3},${y+8} l${bw+6},-6`,stroke:"var(--surface)","stroke-width":3},svg);});
+  }
+  $("wfSub").textContent=`${periodLabel()} · ${state.cur}${broken?" · axis starts above zero (marked ⫽) to make the variance readable":""}`;
+}
+
+/* ---------- monthly trend + cumulative variance ---------- */
+function renderLine(){
+  const box=$("line"); box.replaceChildren();
+  const S=sel(), W=Math.max(300,box.clientWidth), narrow=W<520;
+  const left=narrow?50:64, right=narrow?10:24, H1=narrow?190:220, H2=narrow?130:150, gap=26, top=10, bottom=24;
+  const H=top+H1+gap+H2+bottom;
+  const svg=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Monthly actual versus budget, and cumulative variance"},box);
+  const mb=[],ma=[],cv=[];let run=0;
+  for(let i=0;i<12;i++){mb.push(sum("budget",S,[i]));if(i<=LAST_ACTUAL){const a=sum("actual",S,[i]);ma.push(a);run+=a-mb[i];cv.push(run);}}
+  const sx=i=>left+(W-left-right)*(i+0.5)/12, colW=(W-left-right)/12;
+  // panel 1 domain (zoomed; line chart need not start at zero)
+  const lo=Math.min(...mb,...ma), hi=Math.max(...mb,...ma), pad=(hi-lo)*0.12;
+  const y1min=lo-pad, y1max=hi+pad, sy1=v=>top+H1*(1-(v-y1min)/(y1max-y1min));
+  // panel 2 domain
+  const vmax=Math.max(...cv.map(Math.abs))*1.15||1, y2top=top+H1+gap, sy2=v=>y2top+H2/2-(H2/2)*(v/vmax);
+  // selected band
+  const i0=state.mode==="ytd"?0:state.month;
+  el("rect",{x:left+colW*i0,y:top,width:colW*(state.month-i0+1),height:H1+gap+H2,fill:"var(--accent)",opacity:.05},svg);
+  // panel 1 grid
+  for(let t=0;t<=3;t++){const v=y1min+(y1max-y1min)*t/3,y=sy1(v);el("line",{x1:left,x2:W-right,y1:y,y2:y,stroke:"var(--grid)"},svg);txt(svg,left-8,y,fmt(v),{"text-anchor":"end","dominant-baseline":"middle",fill:"var(--muted)","font-size":11});}
+  txt(svg,left,top+2,"Monthly revenue",{fill:"var(--ink-2)","font-size":11.5,"font-weight":600,"dominant-baseline":"hanging"}).setAttribute("x",left+6);
+  const path=arr=>arr.map((v,i)=>`${i?"L":"M"}${sx(i)},${sy1(v)}`).join("");
+  el("path",{d:path(mb),fill:"none",stroke:"var(--muted)","stroke-width":2,"stroke-dasharray":"5 4"},svg);
+  el("path",{d:path(ma),fill:"none",stroke:"var(--actual)","stroke-width":2.25},svg);
+  ma.forEach((v,i)=>el("circle",{cx:sx(i),cy:sy1(v),r:3,fill:"var(--actual)",stroke:"var(--surface)","stroke-width":1.5},svg));
+  // panel 2: cumulative variance bars
+  el("line",{x1:left,x2:W-right,y1:sy2(0),y2:sy2(0),stroke:"var(--axis)"},svg);
+  [vmax/1.15,-vmax/1.15].forEach(v=>{const y=sy2(v);el("line",{x1:left,x2:W-right,y1:y,y2:y,stroke:"var(--grid)"},svg);});
+  txt(svg,left-8,sy2(0),fmt(0),{"text-anchor":"end","dominant-baseline":"middle",fill:"var(--muted)","font-size":11});
+  txt(svg,left-8,sy2(-vmax/1.15),fmt(-vmax/1.15),{"text-anchor":"end","dominant-baseline":"middle",fill:"var(--muted)","font-size":11});
+  if(Math.max(...cv)>0) txt(svg,left-8,sy2(vmax/1.15),fmt(vmax/1.15),{"text-anchor":"end","dominant-baseline":"middle",fill:"var(--muted)","font-size":11});
+  txt(svg,left+6,y2top-4,"Cumulative variance vs budget (YTD)",{fill:"var(--ink-2)","font-size":11.5,"font-weight":600});
+  const bw=Math.min(28,colW*0.55);
+  cv.forEach((v,i)=>{
+    const y0=Math.min(sy2(0),sy2(v)),h=Math.max(1.5,Math.abs(sy2(v)-sy2(0)));
+    el("path",{d:v>=0?rt(sx(i)-bw/2,y0,bw,h,3):`M${sx(i)-bw/2},${y0}H${sx(i)+bw/2}V${y0+h-3}Q${sx(i)+bw/2},${y0+h} ${sx(i)+bw/2-3},${y0+h}H${sx(i)-bw/2+3}Q${sx(i)-bw/2},${y0+h} ${sx(i)-bw/2},${y0+h-3}Z`,fill:v>=0?"var(--good)":"var(--bad)"},svg);
+  });
+    MONTHS.forEach((m,i)=>{if(narrow && i%2)return;txt(svg,sx(i),H-6,m,{"text-anchor":"middle",fill:"var(--muted)","font-size":11});});
+  // crosshair over both panels
+  const cross=el("line",{y1:top,y2:y2top+H2,stroke:"var(--ink-2)","stroke-width":1,opacity:0},svg);
+  const hit=el("rect",{x:left,y:top,width:W-left-right,height:H1+gap+H2,fill:"transparent",style:"cursor:crosshair"},svg);
+  const onMove=e=>{
+    const r=svg.getBoundingClientRect(), px=(e.clientX-r.left)*W/r.width;
+    const i=Math.max(0,Math.min(11,Math.floor((px-left)/colW)));
+    cross.setAttribute("x1",sx(i));cross.setAttribute("x2",sx(i));cross.setAttribute("opacity",.45);
+    const rows=[];
+    if(i<=LAST_ACTUAL){const v=ma[i]-mb[i];
+      rows.push({label:"Actual",value:fmt(ma[i],state.cur,false),color:css("--actual")});
+      rows.push({label:"Budget",value:fmt(mb[i],state.cur,false),color:css("--muted"),dash:true});
+      rows.push({label:"Month variance",value:`${fmt(v,state.cur,false)} (${pct(v/mb[i])})`,cls:v>=0?"up":"down"});
+      rows.push({label:"Cumulative variance",value:fmt(cv[i],state.cur,false),cls:cv[i]>=0?"up":"down"});
+    } else {rows.push({label:"Budget",value:fmt(mb[i],state.cur,false),color:css("--muted"),dash:true});rows.push({label:"Actual",value:"not reported"});}
+    showTip(e,`${MONTHS[i]} 2020 · ${state.cur}`,rows);
+  };
+  hit.addEventListener("pointermove",onMove);hit.addEventListener("pointerdown",onMove);
+  hit.addEventListener("pointerleave",()=>{hideTip();cross.setAttribute("opacity",0);});
+  $("lineSub").textContent=`${state.cur} · ${S.length===3?"all streams":S.map(s=>SHORT[s]).join(" + ")} · top: monthly values (axis zoomed to show the gap) · bottom: running shortfall/surplus · highlighted band = selected period`;
+}
+
+/* ---------- heat map ---------- */
+function mix(a,b,t){const pa=a.match(/\w\w/g).map(h=>parseInt(h,16)),pb=b.match(/\w\w/g).map(h=>parseInt(h,16));return "#"+pa.map((v,i)=>Math.round(v+(pb[i]-v)*t).toString(16).padStart(2,"0")).join("");}
+function renderHeat(){
+  const t=$("hm"); t.replaceChildren();
+  const S=sel(), mid=css("--div-mid"), pos=css("--div-pos"), neg=css("--div-neg"), MAXP=0.15;
+  const thead=document.createElement("thead"), hr=document.createElement("tr");
+  const c0=document.createElement("th");c0.className="row";c0.textContent="Stream";hr.appendChild(c0);
+  MONTHS.forEach(m=>{const th=document.createElement("th");th.textContent=m;hr.appendChild(th);});
+  const ytdTh=document.createElement("th");ytdTh.textContent="Full year";hr.appendChild(ytdTh);
+  thead.appendChild(hr);t.appendChild(thead);
+  const tb=document.createElement("tbody");
+  const rowsDef=[...S.map(s=>({label:SHORT[s],streams:[s],full:s})),...(S.length>1?[{label:"Total (selected)",streams:S,total:true}]:[])];
+  for(const r of rowsDef){
+    const tr=document.createElement("tr");
+    const th=document.createElement("th");th.className="row";th.textContent=r.label;if(r.total)th.style.fontWeight=600;tr.appendChild(th);
+    for(let i=0;i<=12;i++){
+      const td=document.createElement("td");
+      const idx=i===12?[...Array(LAST_ACTUAL+1).keys()]:[i];
+      const b=sum("budget",r.streams,idx),a=sum("actual",r.streams,idx),p=(a-b)/b;
+      const k=Math.min(1,Math.abs(p)/MAXP);
+      td.style.background=mix(mid,p>=0?pos:neg,k*0.85);
+      td.style.color=k>0.6?"#fff":"var(--ink)";
+      if(r.total||i===12)td.style.fontWeight=600;
+      td.textContent=pct(p);
+      td.tabIndex=0;
+      const isSel = i===12 ? false : (state.mode==="month"? i===state.month : i<=state.month);
+      if(isSel && state.mode==="month") td.classList.add("sel");
+      const name=r.full||"Selected streams";
+      const lbl=i===12?"Full year 2020":MONTHS[i]+" 2020";
+      td.setAttribute("aria-label",`${name}, ${lbl}: ${pct(p)}`);
+      bindTip(td,()=>[`${name} · ${lbl}`,[{label:"Actual",value:fmt(a,state.cur,false)},{label:"Budget",value:fmt(b,state.cur,false)},{label:"Variance",value:`${fmt(a-b,state.cur,false)} (${pct(p)})`,cls:p>=0?"up":"down"}]]);
+      const go=()=>{ if(i===12){state.mode="ytd";state.month=LAST_ACTUAL;} else {state.mode="month";state.month=i;} if(r.full) state.streams=new Set([r.full]); hideTip(); syncControls(); render(); };
+      td.addEventListener("click",go);td.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();go();}});
+      tr.appendChild(td);
+    }
+    tb.appendChild(tr);
+  }
+  t.appendChild(tb);
+}
+function renderRaw(){
+  const t=$("raw"); t.replaceChildren();
+  const hr=document.createElement("tr");
+  ["Month","Stream","Budget","Actual","Variance","Variance %"].forEach(h=>{const th=document.createElement("th");th.textContent=h;hr.appendChild(th);});
+  const th=document.createElement("thead");th.appendChild(hr);t.appendChild(th);
+  const tb=document.createElement("tbody");
+  for(let i=0;i<12;i++)for(const s of sel()){
+    const b=DATA[state.cur][s].budget[i],a=DATA[state.cur][s].actual[i];
+    const tr=document.createElement("tr");
+    [MONTHS[i]+" 2020",s,fmt(b,state.cur,false),a==null?"—":fmt(a,state.cur,false),a==null?"—":fmt(a-b,state.cur,false),a==null?"—":pct((a-b)/b)].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td);});
+    tb.appendChild(tr);
+  }
+  t.appendChild(tb);
+}
+
+function render(){syncControls();renderKPIs();renderInsights();renderBars();renderWaterfall();renderLine();renderHeat();renderRaw();}
+try{const th=localStorage.getItem("pf-theme");if(th)document.documentElement.setAttribute("data-theme",th);}catch(e){}
+buildControls();render();
+let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(render,120);});
+</script>
+</body>
+</html>

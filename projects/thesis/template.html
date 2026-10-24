@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Islamic Banking Diversification Study</title>
+<meta name="description" content="Interactive results of Jamal Kanbarieh's master's research: does diversification drive the profitability of Syrian Islamic banks? Pooled regression on 36 bank-years.">
+<link rel="stylesheet" href="../../assets/site.css">
+<style>
+:root{--c1:#2a78d6;--c2:#eb6834;--c3:#1baf7a}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){--c1:#3987e5;--c2:#d95926;--c3:#199e70}}
+:root[data-theme="dark"]{--c1:#3987e5;--c2:#d95926;--c3:#199e70}
+.hyp{width:100%;border-collapse:collapse;font-size:13px}
+.hyp th{color:var(--muted);font-weight:500;font-size:12px;text-align:left;padding:6px 8px;border-bottom:1px solid var(--axis)}
+.hyp td{padding:8px;border-bottom:1px solid var(--grid);vertical-align:top}
+.hyp td small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.hyp tr{cursor:pointer}.hyp tr:hover td{background:var(--surface-2)}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;white-space:nowrap}
+.st i{width:10px;height:10px;border-radius:50%;display:inline-block;border:2px solid currentColor;box-sizing:border-box}
+.st.ok i{background:currentColor}.st.dir i,.st.mix i{background:linear-gradient(90deg,currentColor 50%,transparent 50%)}.st.nt i{border-radius:2px;height:2px;border-width:1px}
+.mnote{font-size:13px;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:10px 12px;margin-top:12px}
+.mnote b{color:var(--ink)}
+.st.ok{color:var(--good-ink)}.st.dir{color:var(--accent)}.st.mix{color:var(--ink-2)}.st.no{color:var(--bad-ink)}.st.nt{color:var(--muted)}
+.fit{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.fit span{font-size:12px;border:1px solid var(--ring);border-radius:999px;padding:2px 9px;color:var(--ink-2);background:var(--surface-2)}
+.fit b{color:var(--ink)}
+.interp{font-size:13px;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:10px 12px;margin-top:10px}
+.interp b{color:var(--ink)}
+.recs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.recs ul{margin:8px 0 0;padding-left:18px;color:var(--ink-2);font-size:13.5px}
+.recs li{margin:5px 0}
+.recs h3{font-size:14px;margin:0;color:var(--navy)}
+@media (max-width:860px){.recs{grid-template-columns:minmax(0,1fr)}}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 8px}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="crumb"><a href="../../index.html">Jamal Kanbarieh · Portfolio</a> &nbsp;/&nbsp; <b>Islamic Banking Diversification Study</b></div>
+  <button class="themebtn" id="themeBtn" type="button" aria-label="Toggle dark mode"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg> Theme</button>
+</div></header>
+
+<div class="wrap hero">
+  <a class="backbtn" href="../../index.html">← Back to portfolio</a>
+  <p class="eyebrow">MBA research · Econometrics · Power BI</p>
+  <h1>Investment Portfolio Management &amp; Profitability in Syrian Islamic Banks</h1>
+  <p class="lede"><b>Does diversification pay?</b> MBA research (Financial Management, Higher Institute of Business Administration, 2026) testing whether diversifying across instruments, currencies, sectors and geographies improves the profitability of Syria's Islamic banks, controlling for asset quality, cost efficiency and market concentration. Explore the regression results, test each hypothesis, and trace every variable bank by bank.</p>
+  <ul class="tags"><li>Panel data · pooled OLS</li><li>Herfindahl-Hirschman indices</li><li>Hypothesis testing</li><li>Financial statement analysis</li><li>SPSS → Power BI</li><li>DAX (130+ measures)</li></ul>
+  <div class="note info" role="note"><span aria-hidden="true">ⓘ</span><div><strong>Sample:</strong> 3 Islamic banks: Al Baraka Bank Syria (2014–2025), Cham Bank and Syria International Islamic Bank (2012–2023). 12 audited annual observations each, giving <strong>36 bank-years</strong>. Profitability is <strong>adjusted</strong> to remove unrealised FX revaluation on the structural position. Regression statistics are the published SPSS results.</div></div>
+</div>
+
+<main class="wrap">
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card insights"><h2>Headline result</h2><ul>
+    <li><b>Cost efficiency is the one robust driver.</b> The adjusted cost-to-income ratio is the only predictor significant in more than one model (ROAA p &lt; .001, ROAE p = .013). It holds three ways: in the pooled coefficient, within each bank over time, and in the cross-bank ranking.</li>
+    <li><b>Diversification shows no reliable effect on returns.</b> None of the four HHI measures is significant for ROAA or ROAE. Sector concentration is significantly negative only for the financing margin (NFIM, p = .039), and that model is itself only marginal (p = .068).</li>
+    <li><b>Why the HHIs disagree:</b> the same index captures different economics at each bank. High currency concentration means hard currency at BBSY but Syrian pounds at SIIB, so pooled coefficients average opposing effects.</li>
+  </ul></div>
+
+  <div class="grid2">
+    <div class="card panel">
+      <div class="panelhead"><div><h2>Regression results</h2><p class="sub">Standardised coefficients (β), pooled OLS, n = 36</p></div>
+        <div class="seg" id="modelSeg"><button type="button" data-v="ROAA_ADJ">Adj. ROAA</button><button type="button" data-v="ROAE_ADJ">Adj. ROAE</button><button type="button" data-v="NFIM">NFIM</button></div></div>
+      <div class="fit" id="fit"></div>
+      <div class="legend"><span><i class="sw" style="background:var(--actual)"></i>Significant (p &lt; .05)</span><span><i class="sw" style="background:var(--budget)"></i>Not significant</span></div>
+      <div class="chart" id="coef"></div>
+      <div class="mnote" id="mnote"></div>
+      <details class="data"><summary>Show the coefficient table</summary><div class="tablewrap"><table class="raw" id="coefTbl"></table></div></details>
+    </div>
+    <div class="card panel">
+      <h2>Hypotheses</h2>
+      <p class="sub">Click a hypothesis to explore its variable below</p>
+      <div class="tablewrap"><table class="hyp" id="hyp"></table></div>
+    </div>
+  </div>
+
+  <div class="card panel full" id="explore">
+    <div class="panelhead"><div><h2 id="varTitle">Variable explorer</h2><p class="sub" id="varSub"></p></div>
+      <div class="ctl"><select id="varSel" aria-label="Variable"></select>
+      <div class="seg" id="axisSeg"><button type="button" data-v="cal">Calendar year</button><button type="button" data-v="rel">Study year 1–12</button></div></div></div>
+    <div class="legend" id="bankLegend"></div>
+    <div class="chart" id="line"></div>
+    <div class="interp" id="interp"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card panel">
+      <div class="panelhead"><div><h2>Relationship explorer</h2><p class="sub" id="scSub"></p></div></div>
+      <div class="ctl"><label class="flabel" for="xSel">X</label><select id="xSel"></select><label class="flabel" for="ySel">Y</label><select id="ySel"></select></div>
+      <div class="legend" id="bankLegend2"></div>
+      <div class="chart" id="scat"></div>
+      <p class="small" id="corr"></p>
+    </div>
+    <div class="card panel">
+      <div class="panelhead"><div><h2>Exposure mix behind the HHI</h2><p class="sub" id="mixSub"></p></div></div>
+      <div class="ctl"><div class="seg" id="bankSeg"></div><div class="seg" id="typeSeg"><button type="button" data-v="CURR">Currency</button><button type="button" data-v="SECT">Sector</button><button type="button" data-v="GEO">Geography</button></div></div>
+      <div class="legend" id="mixLegend"></div>
+      <div class="chart" id="mix"></div>
+    </div>
+  </div>
+
+  <h2 style="margin:28px 0 0;font-size:18px;color:var(--navy)">Recommendations</h2>
+  <div class="recs">
+    <div class="card panel"><h3>For Islamic banks</h3><ul>
+      <li>Prioritise operating cost efficiency through digital banking, product standardisation and process optimisation.</li>
+      <li>Avoid excessive sectoral and geographic concentration, and use newly accessible markets and instruments to diversify.</li>
+      <li>Where feasible, reallocate non-income-generating balances to Sharia-compliant investment agencies or short-term instruments.</li></ul></div>
+    <div class="card panel"><h3>For the central bank &amp; regulators</h3><ul>
+      <li>Deepen the Islamic financial market with a broader range of Sharia-compliant instruments.</li>
+      <li>Introduce local sovereign Sukuk to widen investment opportunities and improve risk-adjusted returns.</li>
+      <li>Support shared banking infrastructure and sector-wide digital transformation to lower operating costs.</li></ul></div>
+    <div class="card panel"><h3>For future research</h3><ul>
+      <li>Apply panel estimators (fixed/random effects, Hausman test) to control for unobserved bank-specific effects.</li>
+      <li>Expand the sample as more Islamic banks publish audited statements, and extend the study period.</li></ul></div>
+  </div>
+
+  <section class="about">
+    <div class="card panel">
+      <h2>About this research</h2>
+      <p><b>Research question:</b> Does income and asset diversification improve the profitability of Islamic banks operating in Syria's high-inflation, sanctions-constrained environment?</p>
+      <p><b>Method:</b> Variables were built from audited financial statements: four HHI concentration indices (portfolio composition, currency, sector, geography), the Stage 3 financing ratio, the adjusted cost-to-income ratio and an Islamic-sector competition HHI. These were regressed on three profitability measures (adjusted ROAA, adjusted ROAE and the net financing and investment margin) using pooled OLS in SPSS. The Power BI model then turned the results into a navigable evidence base, with star-schema fact tables for ratios, exposures, portfolio components and regression output.</p>
+      <p><b>What this view adds:</b> a relationship explorer for any predictor/outcome pair, with pooled and within-bank correlations; calendar or study-year alignment; and the underlying exposure mix behind each HHI.</p>
+    </div>
+    <div class="card panel">
+      <h2>Model</h2>
+      <dl>
+        <dt>Tools</dt><dd>SPSS · Excel · Power BI · Power Query · DAX</dd>
+        <dt>Data model</dt><dd>7 fact tables · 9 dimensions · 130+ measures</dd>
+        <dt>Observations</dt><dd>36 bank-years · 864 exposure records · 468 portfolio records</dd>
+        <dt>Dependent variables</dt><dd>Adj. ROAA · Adj. ROAE · NFIM</dd>
+      </dl>
+    </div>
+  </section>
+  <a class="backbtn bottom" href="../../index.html">← Back to all projects</a>
+</main>
+<footer><div class="wrap">Interactive web version of a Power BI report, built by Jamal Kanbarieh from his master's research. Data from banks' audited public financial statements.</div></footer>
+
+<script src="../../assets/common.js"></script>
+<script>
+const D = __DATA__;
+const BANKS = ["BBSY", "CHB", "SIIB"], BN = { BBSY: "Al Baraka Bank Syria", CHB: "Cham Bank", SIIB: "Syria Intl. Islamic Bank" }, BC = { BBSY: "var(--c1)", CHB: "var(--c2)", SIIB: "var(--c3)" };
+const V = Object.fromEntries(D.vars.map(v => [v.VariableKey, v]));
+const OBS = D.obs;
+const state = { model: "ROAA_ADJ", v: "CIR_ADJ", axis: "cal", x: "CIR_ADJ", y: "ROAA_ADJ", bank: "BBSY", type: "CURR" };
+const INTERP = {
+  CIR_ADJ: "Adjusted CIR is the clearest and most robust finding of the study. It is the only predictor significant in more than one model, and it is supported at three levels: a significant pooled coefficient, a consistently negative association within each bank over time, and an inverse cross-sectional ranking of the three banks on cost efficiency and profitability.",
+  AQ1: "The positive sign in the ROAA and ROAE equations belongs to the partial coefficient, i.e. what remains of AQ1's association with profitability once the other six predictors are held constant. It is not a feature of the underlying relationship in the data.",
+  HHI_PORT: "The banks do not disclose earning assets under a common set of categories: BBSY reports 9 components, CHB 10 and SIIB 20. The index is consistent within each bank over time but not strictly comparable across banks, so SIIB's different level should not be read as a difference in strategy.",
+  HHI_CURR: "Concentration in hard currency and concentration in domestic currency have opposite economic implications. BBSY's high-concentration years are hard-currency years; SIIB's are Syrian-pound years. A single pooled coefficient has to average two exposures that theory expects to carry opposite signs.",
+  HHI_SECT: "Interbank placements (the Financial-sector exposure that dominates the concentrated end of this measure) are low-margin instruments, while direct financing of commercial counterparties earns a wider spread. The NFIM model is only marginally significant (F = 2.172, p = .068) and leans heavily on CHB's trajectory, so this is suggestive evidence for H4, not confirmation.",
+  HHI_GEO: "The variable measures a different exposure at each bank: domestic concentration at SIIB, foreign-placement concentration at BBSY, and an alternation between the two at CHB. A pooled coefficient therefore aggregates three different constructs.",
+  HHI_COMP: "This variable takes one value per calendar year, common to all banks. Its coefficient absorbs common year effects (macroeconomic conditions, exchange-rate movements, regulatory change) alongside any genuine effect of competitive structure.",
+  ROAA_ADJ: "Adjusted return on average assets: net income excluding unrealised structural FX revaluation, divided by average total assets.",
+  ROAE_ADJ: "Adjusted return on average equity: adjusted net income divided by average equity excluding unrealised revaluation reserves.",
+  NFIM: "Net financing and investment margin: net financing and investment income divided by average gross earning assets. This is the intermediation spread.",
+  CAR: "Capital adequacy ratio. It was excluded from the final model for parsimony, so no empirical claim is made.",
+  CET1_RATIO: "Common Equity Tier 1 ratio (descriptive only).",
+  CIR_UNADJ: "Unadjusted cost-to-income ratio, shown for comparison with the adjusted measure used in the model.",
+  AQ2: "Stage 3 ratio for interbank investments; available for fewer years and not used in the final model."
+};
+const isPct = k => (V[k] && V[k].DisplayFormat === "Percent");
+const fmtV = (k, v) => v == null ? "—" : isPct(k) ? pctP(v, Math.abs(v) < .1 ? 2 : 1) : v.toFixed(3);
+const sigLbl = p => p < .001 ? "<.001" : p.toFixed(3).replace(/^0/, "");
+
+function kpis() {
+  const m = Object.fromEntries(D.models.map(x => [x.ModelKey, x]));
+  const cir = D.coef.find(c => c.ModelKey === "ROAA_ADJ" && c.PredictorKey === "CIR_ADJ");
+  const items = [
+    { k: "Sample", v: "36", s: "bank-years · 3 banks × 12 years" },
+    { k: "Best model fit", v: "R² " + m.ROAA_ADJ.RSquare.toFixed(2), s: `Adj. ROAA · F = ${m.ROAA_ADJ.F.toFixed(2)}, p ${m.ROAA_ADJ.Sig_F_Display}` },
+    { k: "Key driver", v: "β " + cir.Beta.toFixed(2).replace("-", "−"), s: "Adj. cost-to-income → ROAA" },
+    { k: "Hypotheses", v: "1 of 7", s: "supported · 3 directionally consistent" },
+  ];
+  $("kpis").replaceChildren(...items.map(it => h("div", { class: "card kpi" }, h("div", { class: "k", text: it.k }), h("div", { class: "v", text: it.v }), h("div", { class: "s", text: it.s }))));
+}
+
+function renderCoef() {
+  segSync("modelSeg", state.model);
+  const m = D.models.find(x => x.ModelKey === state.model);
+  $("fit").replaceChildren(...[["R²", m.RSquare.toFixed(3)], ["Adj. R²", m.AdjRSquare.toFixed(3)], ["F", m.F.toFixed(2)], ["p (F)", m.Sig_F_Display], ["Jointly significant", m.IsJointlySignificant05 ? "Yes" : "No (at 5%)"]].map(([a, b]) => h("span", {}, document.createTextNode(a + " "), h("b", { text: b }))));
+  const rows = D.coef.filter(c => c.ModelKey === state.model && !c.IsConstant);
+  const box = $("coef"); box.replaceChildren();
+  const W = Math.max(300, box.clientWidth), narrow = W < 520, labelW = narrow ? 104 : 150, valW = 92, rowH = 30, top = 4, bottom = 22, H = top + rows.length * rowH + bottom;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Standardised regression coefficients" }, box);
+  const lim = Math.max(1, ...rows.map(r => Math.abs(r.Beta))), sx = v => labelW + (W - labelW - valW) * (v + lim) / (2 * lim);
+  for (const t of [-1, -.5, 0, .5, 1]) { el("line", { x1: sx(t), x2: sx(t), y1: top, y2: H - bottom, stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, sx(t), H - 6, t.toFixed(1).replace("-", "−"), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  rows.forEach((r, i) => {
+    const y = top + i * rowH + 6, bh = rowH - 12, a = sx(0), b = sx(r.Beta), sig = r.IsSignificant05;
+    const v = V[r.PredictorKey], g = el("g", { class: "hit", tabindex: 0, role: "button", "aria-label": `${v.VariableShortName}: beta ${r.Beta.toFixed(3)}, p ${r.Sig_Display}` }, svg);
+    el("rect", { x: 0, y: y - 6, width: W, height: rowH, fill: "transparent" }, g);
+    txt(g, 0, y + bh / 2, v.VariableShortName, { "dominant-baseline": "middle", fill: sig ? "var(--ink)" : "var(--ink-2)", "font-weight": sig ? 650 : 400 });
+    el("path", { d: r.Beta >= 0 ? rr(a, y, b - a, bh, 3) : rl(b, y, a - b, bh, 3), fill: sig ? "var(--actual)" : "var(--budget)", class: "mk" }, g);
+    txt(g, W, y + bh / 2, `${r.Beta.toFixed(2).replace("-", "−")}  p ${r.Sig_Display}${sig ? " ★" : ""}`, { "text-anchor": "end", "dominant-baseline": "middle", "font-size": 12, fill: sig ? "var(--ink)" : "var(--muted)", "font-weight": sig ? 650 : 400 });
+    bindTip(g, () => [`${v.VariableName} → ${V[state.model].VariableShortName}`, [{ label: "β (standardised)", value: r.Beta.toFixed(3) }, { label: "B (unstandardised)", value: r.B.toFixed(4) }, { label: "Std. error", value: r.StdError.toFixed(4) }, { label: "t", value: r.t.toFixed(2) }, { label: "p", value: r.Sig_Display, cls: sig ? "up" : "" }, { label: "Expected sign", value: v.ExpectedSign || "—" }]]);
+    onActivate(g, () => { state.v = r.PredictorKey; state.x = r.PredictorKey; state.y = state.model; render(); $("explore").scrollIntoView({ behavior: "smooth", block: "start" }); });
+  });
+  const sigs = rows.filter(r => r.IsSignificant05), dv = V[state.model].VariableShortName;
+  $("mnote").replaceChildren(h("b", { text: "Reading this model: " }), document.createTextNode(
+    `The seven predictors explain ${(m.RSquare * 100).toFixed(0)}% of the variation in ${dv} (adjusted R² ${m.AdjRSquare.toFixed(2)}). ` +
+    (m.IsJointlySignificant05 ? `The model is jointly significant (F = ${m.F.toFixed(2)}, p ${m.Sig_F_Display}). ` : `The model is not jointly significant at 5% (F = ${m.F.toFixed(2)}, p = ${m.Sig_F_Display}), so its coefficients are suggestive only. `) +
+    (sigs.length ? sigs.map(r => `${V[r.PredictorKey].VariableShortName} is significant (β ${r.Beta.toFixed(2).replace("-", "−")}): a one-standard-deviation increase is associated with a ${Math.abs(r.Beta).toFixed(2)} SD ${r.Beta < 0 ? "lower" : "higher"} ${dv}.`).join(" ") : "No individual predictor is significant.")));
+  const t = $("coefTbl"); t.replaceChildren(h("thead", {}, h("tr", {}, ...["Predictor", "B", "Std. error", "β", "t", "p"].map(x => h("th", { text: x })))));
+  const tb = h("tbody"); for (const r of D.coef.filter(c => c.ModelKey === state.model)) tb.appendChild(h("tr", {}, h("td", { text: r.PredictorLabel }), h("td", { text: r.B.toFixed(4) }), h("td", { text: r.StdError.toFixed(4) }), h("td", { text: r.Beta == null ? "—" : r.Beta.toFixed(3) }), h("td", { text: r.t.toFixed(3) }), h("td", { text: r.Sig_Display })));
+  t.appendChild(tb);
+}
+
+function statusOf(o) {
+  if (/^Supported/.test(o)) return ["ok", "●", "Supported"];
+  if (/Directionally/.test(o)) return ["dir", "◐", "Directionally consistent"];
+  if (/Mixed/.test(o)) return ["mix", "◑", "Mixed"];
+  if (/Not supported/.test(o)) return ["no", "○", "Not supported"];
+  return ["nt", "–", "Not tested"];
+}
+function renderHyp() {
+  const t = $("hyp"); t.replaceChildren(h("thead", {}, h("tr", {}, h("th", { text: "#" }), h("th", { text: "Hypothesis (expected effect on profitability)" }), h("th", { text: "Outcome" }))));
+  const tb = h("tbody");
+  const hs = D.vars.filter(v => v.HypothesisID).sort((a, b) => +a.HypothesisID.slice(1) - +b.HypothesisID.slice(1));
+  for (const v of hs) {
+    const [cls, ic, lab] = statusOf(v.HypothesisOutcome);
+    const tr = h("tr", { tabindex: 0 }, h("td", { text: v.HypothesisID }), h("td", {}, document.createTextNode(`${v.VariableName}: ${v.ExpectedSign.toLowerCase()}`), h("small", { text: v.OutcomeDetail })), h("td", {}, h("span", { class: "st " + cls }, h("i", { "aria-hidden": "true" }), document.createTextNode(lab))));
+    onActivate(tr, () => { if (!OBS.length) return; state.v = v.VariableKey; state.x = v.VariableKey; render(); $("explore").scrollIntoView({ behavior: "smooth", block: "start" }); });
+    tb.appendChild(tr);
+  }
+  t.appendChild(tb);
+}
+
+function bankLegend(id) { $(id).replaceChildren(...BANKS.map(b => h("span", {}, (() => { const i = h("i", { class: "ln" }); i.style.borderColor = BC[b]; return i; })(), document.createTextNode(`${BN[b]} (${b})`)))); }
+
+function renderLine() {
+  segSync("axisSeg", state.axis);
+  $("varSel").value = state.v;
+  const k = state.v, v = V[k], box = $("line"); box.replaceChildren();
+  const W = Math.max(300, box.clientWidth), narrow = W < 560, left = narrow ? 46 : 60, right = narrow ? 12 : 64, top = 12, bottom = 28, H = narrow ? 240 : 290;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${v.VariableName} by bank` }, box);
+  const xs = state.axis === "cal" ? [...new Set(OBS.map(o => o.year))].sort() : [...Array(12).keys()].map(i => i + 1);
+  const xOf = o => state.axis === "cal" ? o.year : o.idx;
+  const pts = OBS.map(o => ({ b: o.bank, x: xOf(o), y: D.ratio[k][o.k] ?? null, o })).filter(p => p.y != null);
+  let lo = Math.min(...pts.map(p => p.y)), hi = Math.max(...pts.map(p => p.y)); if (lo > 0 && lo < hi * .4) lo = 0;
+  const ticks = niceTicks(lo, hi, 4); lo = ticks[0]; hi = ticks[ticks.length - 1];
+  const sx = x => left + (W - left - right) * (x - xs[0]) / (xs[xs.length - 1] - xs[0]), sy = y => top + (H - top - bottom) * (1 - (y - lo) / (hi - lo));
+  for (const t of ticks) { el("line", { x1: left, x2: W - right, y1: sy(t), y2: sy(t), stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, left - 8, sy(t), isPct(k) ? (t * 100).toFixed(Math.abs(hi - lo) < .1 ? 1 : 0) + "%" : t.toFixed(2), { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  xs.forEach((x, i) => { if (narrow && i % 2) return; txt(svg, sx(x), H - 8, state.axis === "cal" ? String(x) : "Y" + x, { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); });
+  for (const b of BANKS) {
+    const s = pts.filter(p => p.b === b).sort((a, c) => a.x - c.x);
+    el("path", { d: s.map((p, i) => `${i ? "L" : "M"}${sx(p.x)},${sy(p.y)}`).join(""), fill: "none", stroke: BC[b], "stroke-width": 2.25 }, svg);
+    s.forEach(p => el("circle", { cx: sx(p.x), cy: sy(p.y), r: 3, fill: BC[b], stroke: "var(--surface)", "stroke-width": 1.5 }, svg));
+    if (!narrow && s.length) { const l = s[s.length - 1]; txt(svg, sx(l.x) + 7, sy(l.y), b, { "dominant-baseline": "middle", "font-size": 11.5, fill: "var(--ink-2)", "font-weight": 600 }); }
+  }
+  const cross = el("line", { y1: top, y2: H - bottom, stroke: "var(--ink-2)", opacity: 0 }, svg);
+  const hit = el("rect", { x: left, y: top, width: W - left - right, height: H - top - bottom, fill: "transparent", style: "cursor:crosshair" }, svg);
+  const mv = e => { const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width; const x = xs.reduce((a, c) => Math.abs(sx(c) - px) < Math.abs(sx(a) - px) ? c : a, xs[0]); cross.setAttribute("x1", sx(x)); cross.setAttribute("x2", sx(x)); cross.setAttribute("opacity", .4);
+    showTip(e, state.axis === "cal" ? String(x) : `Study year ${x}`, BANKS.map(b => { const p = pts.find(q => q.b === b && q.x === x); return { label: b + (p && state.axis === "rel" ? ` (${p.o.year})` : ""), value: p ? fmtV(k, p.y) : "outside study period", color: getComputedStyle(document.documentElement).getPropertyValue(BC[b].slice(4, -1)).trim() }; })); };
+  hit.addEventListener("pointermove", mv); hit.addEventListener("pointerdown", mv); hit.addEventListener("pointerleave", () => { hideTip(); cross.setAttribute("opacity", 0); });
+  $("varTitle").textContent = v.VariableName;
+  $("varSub").textContent = `${v.VariableRole}${v.HypothesisID ? " · " + v.HypothesisID : ""}${v.HigherMeans ? " · higher = " + v.HigherMeans : ""}${v.ThesisSection ? " · thesis §" + v.ThesisSection : ""}`;
+  const ip = $("interp"); ip.replaceChildren(h("b", { text: "Interpretation: " }), document.createTextNode(INTERP[k] || ""));
+}
+
+function corr(a, b) { const n = a.length; if (n < 3) return null; const ma = a.reduce((s, x) => s + x, 0) / n, mb = b.reduce((s, x) => s + x, 0) / n; let num = 0, da = 0, db = 0; for (let i = 0; i < n; i++) { num += (a[i] - ma) * (b[i] - mb); da += (a[i] - ma) ** 2; db += (b[i] - mb) ** 2; } return num / Math.sqrt(da * db); }
+function renderScatter() {
+  $("xSel").value = state.x; $("ySel").value = state.y;
+  const X = state.x, Y = state.y, box = $("scat"); box.replaceChildren();
+  const W = Math.max(280, box.clientWidth), left = 50, right = 12, top = 10, bottom = 34, H = Math.min(340, Math.max(260, W * .62));
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${V[X].VariableShortName} versus ${V[Y].VariableShortName}` }, box);
+  const pts = OBS.map(o => ({ o, x: D.ratio[X][o.k], y: D.ratio[Y][o.k] })).filter(p => p.x != null && p.y != null);
+  const xt = niceTicks(Math.min(...pts.map(p => p.x)), Math.max(...pts.map(p => p.x)), 4), yt = niceTicks(Math.min(...pts.map(p => p.y)), Math.max(...pts.map(p => p.y)), 4);
+  const sx = v => left + (W - left - right) * (v - xt[0]) / (xt[xt.length - 1] - xt[0]), sy = v => top + (H - top - bottom) * (1 - (v - yt[0]) / (yt[yt.length - 1] - yt[0]));
+  const lab = (k, t) => isPct(k) ? (t * 100).toFixed(Math.abs(t) < .1 && t !== 0 ? 1 : 0) + "%" : t.toFixed(2);
+  for (const t of xt) { el("line", { x1: sx(t), x2: sx(t), y1: top, y2: H - bottom, stroke: "var(--grid)" }, svg); txt(svg, sx(t), H - bottom + 14, lab(X, t), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  for (const t of yt) { el("line", { x1: left, x2: W - right, y1: sy(t), y2: sy(t), stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, left - 6, sy(t), lab(Y, t), { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  txt(svg, (left + W - right) / 2, H - 4, V[X].VariableShortName + " →", { "text-anchor": "middle", fill: "var(--ink-2)", "font-size": 11.5 });
+  // pooled OLS fit
+  const xa = pts.map(p => p.x), ya = pts.map(p => p.y), mx = xa.reduce((a, b) => a + b, 0) / xa.length, my = ya.reduce((a, b) => a + b, 0) / ya.length;
+  let sxy = 0, sxx = 0; pts.forEach(p => { sxy += (p.x - mx) * (p.y - my); sxx += (p.x - mx) ** 2; }); const slope = sxy / sxx, icpt = my - slope * mx;
+  const x0 = xt[0], x1 = xt[xt.length - 1], clampY = v => Math.max(yt[0], Math.min(yt[yt.length - 1], v));
+  el("line", { x1: sx(x0), y1: sy(clampY(icpt + slope * x0)), x2: sx(x1), y2: sy(clampY(icpt + slope * x1)), stroke: "var(--ink-2)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
+  pts.forEach(p => {
+    const g = el("g", { class: "hit", tabindex: 0, "aria-label": `${p.o.bank} ${p.o.year}` }, svg);
+    el("circle", { cx: sx(p.x), cy: sy(p.y), r: 11, fill: "transparent" }, g);
+    el("circle", { cx: sx(p.x), cy: sy(p.y), r: 5, fill: BC[p.o.bank], stroke: "var(--surface)", "stroke-width": 1.5, class: "mk" }, g);
+    bindTip(g, () => [`${BN[p.o.bank]} · ${p.o.year}`, [{ label: V[X].VariableShortName, value: fmtV(X, p.x) }, { label: V[Y].VariableShortName, value: fmtV(Y, p.y) }]]);
+  });
+  const r = corr(xa, ya), within = BANKS.map(b => { const s = pts.filter(p => p.o.bank === b); return `${b} ${(corr(s.map(p => p.x), s.map(p => p.y)) ?? 0).toFixed(2).replace("-", "−")}`; });
+  $("corr").textContent = `Pooled correlation r = ${r.toFixed(2).replace("-", "−")} (n = ${pts.length}) · within-bank r: ${within.join(" · ")} · dashed line = pooled least-squares fit`;
+  $("scSub").textContent = `${V[X].VariableName} vs ${V[Y].VariableName} · each dot is one bank-year`;
+}
+
+function renderMix() {
+  segSync("bankSeg", state.bank); segSync("typeSeg", state.type);
+  const box = $("mix"); box.replaceChildren();
+  const T = state.type, b = state.bank, obs = OBS.filter(o => o.bank === b).sort((a, c) => a.year - c.year);
+  const order = D.divOrder[T]; const totals = {};
+  obs.forEach(o => { const m = D.div[T][o.k] || {}; for (const c in m) totals[c] = (totals[c] || 0) + m[c]; });
+  const cats = order.filter(c => c !== "Other" && totals[c] > 0).sort((a, c) => totals[c] - totals[a]); const top = cats.slice(0, 5);
+  if (order.some(c => totals[c] > 0 && !top.includes(c))) top.push("Other");
+  const COLS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#898781"];
+  const dark = document.documentElement.getAttribute("data-theme") === "dark" || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+  const COLD = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#6a6963"];
+  const col = i => (dark ? COLD : COLS)[top[i] === "Other" ? 5 : i];
+  $("mixLegend").replaceChildren(...top.map((c, i) => h("span", {}, (() => { const s = h("i", { class: "sw" }); s.style.background = col(i); return s; })(), document.createTextNode(c))));
+  const W = Math.max(280, box.clientWidth), left = 40, right = 6, topP = 24, bottom = 26, H = Math.min(320, Math.max(250, W * .6));
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Exposure mix by year" }, box);
+  const slot = (W - left - right) / obs.length, bw = Math.min(30, slot * .7), sy = v => topP + (H - topP - bottom) * (1 - v);
+  for (const t of [0, .25, .5, .75, 1]) { el("line", { x1: left, x2: W - right, y1: sy(t), y2: sy(t), stroke: t ? "var(--grid)" : "var(--axis)" }, svg); txt(svg, left - 6, sy(t) + (t === 1 ? 6 : 0), (t * 100) + "%", { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 10.5 }); }
+  obs.forEach((o, i) => {
+    const m = D.div[T][o.k] || {}, cx = left + slot * i + slot / 2; let acc = 0;
+    const named = top.filter(c => c !== "Other").map(c => m[c] || 0), tot = Object.values(m).reduce((a, b) => a + b, 0);
+    const vals = top.map((c, j) => c === "Other" ? Math.max(0, tot - named.reduce((a, b) => a + b, 0)) : named[j]);
+    const g = el("g", { class: "hit", tabindex: 0, "aria-label": `${b} ${o.year}` }, svg);
+    el("rect", { x: cx - slot / 2, y: topP, width: slot, height: H - topP - bottom, fill: "transparent" }, g);
+    vals.forEach((v, j) => { if (v <= 0) return; const y0 = sy(acc + v), y1 = sy(acc); el("rect", { x: cx - bw / 2, y: y0, width: bw, height: Math.max(0, y1 - y0 - 1.5), fill: col(j), class: "mk" }, g); acc += v; });
+    const hhi = D.ratio["HHI_" + T][o.k];
+    txt(g, cx, topP - 7, hhi == null ? "" : hhi.toFixed(2), { "text-anchor": "middle", "font-size": 10.5, fill: "var(--ink-2)" });
+    if (obs.length <= 12 && (W > 420 || i % 2 === 0)) txt(g, cx, H - 8, "'" + String(o.year).slice(2), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 });
+    bindTip(g, () => [`${BN[b]} · ${o.year} · HHI ${hhi?.toFixed(3) ?? "—"}`, top.map((c, j) => ({ label: c, value: pctP(vals[j]), color: col(j) })).filter((r, j) => vals[j] > 0)]);
+  });
+  $("mixSub").textContent = `${BN[b]} · ${T === "CURR" ? "currency" : T === "SECT" ? "sector" : "geographic"} shares of net exposure · number above each bar = HHI (1 = fully concentrated)`;
+}
+
+function build() {
+  const vs = $("varSel"), xs = $("xSel"), ys = $("ySel");
+  const groups = {}; D.vars.forEach(v => (groups[v.VariableRole] ||= []).push(v));
+  for (const role of ["Dependent", "Independent", "Control"]) { const g = h("optgroup", { label: role }); groups[role].forEach(v => g.appendChild(h("option", { value: v.VariableKey, text: v.VariableName }))); vs.appendChild(g); }
+  D.vars.filter(v => v.InFinalModel && v.VariableRole !== "Dependent").forEach(v => xs.appendChild(h("option", { value: v.VariableKey, text: v.VariableShortName })));
+  D.vars.filter(v => v.VariableRole === "Dependent").forEach(v => ys.appendChild(h("option", { value: v.VariableKey, text: v.VariableShortName })));
+  vs.onchange = () => { state.v = vs.value; if (V[state.v].InFinalModel && V[state.v].VariableRole !== "Dependent") state.x = state.v; render(); };
+  xs.onchange = () => { state.x = xs.value; renderScatter(); }; ys.onchange = () => { state.y = ys.value; renderScatter(); };
+  segBind("modelSeg", null, v => { state.model = v; state.y = v; }, render);
+  segBind("axisSeg", null, v => state.axis = v, renderLine);
+  const bs = $("bankSeg"); BANKS.forEach(b => bs.appendChild(h("button", { type: "button", "data-v": b, text: b })));
+  segBind("bankSeg", null, v => state.bank = v, renderMix); segBind("typeSeg", null, v => state.type = v, renderMix);
+  bankLegend("bankLegend"); bankLegend("bankLegend2");
+  initTheme(render);
+}
+function render() { renderCoef(); renderHyp(); renderLine(); renderScatter(); renderMix(); }
+kpis(); build(); render(); onResize(render);
+</script>
+</body>
+</html>

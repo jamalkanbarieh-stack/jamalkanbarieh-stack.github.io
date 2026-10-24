@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Syrian Banking Peer Benchmark</title>
+<meta name="description" content="Interactive peer benchmarking of Syrian private banks (Q4 2023 – Q4 2024) by Jamal Kanbarieh: size, profitability, efficiency, asset quality, liquidity and capital.">
+<link rel="stylesheet" href="../../assets/site.css">
+<style>
+.seg.wrapok{flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sc td,.sc th{padding-left:6px;padding-right:6px}
+#focusSel{max-width:240px}
+.legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.small{font-size:12px;color:var(--muted)}
+.fl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chg{font-size:12.5px}
+.lt-wrap{overflow:auto;max-height:560px;margin-top:8px;border:1px solid var(--grid);border-radius:8px}
+.def{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 24px;font-size:13px;color:var(--ink-2);margin:8px 0 0;padding:0;list-style:none}
+.def li b{color:var(--ink)}
+@media (max-width:860px){.def{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="crumb"><a href="../../index.html">Jamal Kanbarieh · Portfolio</a> &nbsp;/&nbsp; <b>Banking Sector Peer Benchmark</b></div>
+  <button class="themebtn" id="themeBtn" type="button" aria-label="Toggle dark mode"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg> Theme</button>
+</div></header>
+
+<div class="wrap hero">
+  <a class="backbtn" href="../../index.html">← Back to portfolio</a>
+  <p class="eyebrow">Credit &amp; Financial Institutions Analysis · Power BI</p>
+  <h1>Syrian Banking Sector Peer Analysis</h1>
+  <p class="lede">A quarterly benchmark of Syria's listed private banks covering size, profitability, efficiency, asset quality, liquidity, capital and market valuation. It is the kind of counterparty and peer review a bank's financial-institutions desk uses for limit setting and strategy. Pick a focus bank to see where it ranks on every metric, switch between Islamic and conventional peers, and click any bar, dot or row to change the focus.</p>
+  <ul class="tags"><li>Peer benchmarking</li><li>Credit / FI analysis</li><li>Financial ratios</li><li>DAX (100+ measures)</li><li>Power Query</li><li>Data adjustment methodology</li></ul>
+  <div class="note info" role="note"><span aria-hidden="true">ⓘ</span><div><strong>Independent analysis</strong> based solely on banks' <strong>public quarterly disclosures</strong> published by the Syrian Commission on Financial Markets and Securities (SCFMS). Figures are in Syrian pounds (SYP). "Adjusted" figures exclude unrealised structural FX revaluation gains and losses.</div></div>
+  <div class="note" role="note"><span aria-hidden="true">⚑</span><div><strong>Coverage:</strong> shows <strong>Q4 2023 – Q4 2024</strong>, the quarters with near-complete disclosure. All 15 banks reported in Q4 2023 – Q3 2024. In Q4 2024, Cham Bank, Syria International Islamic Bank and Syria Gulf Bank had not published, so they are hidden from that quarter. Later quarters were excluded because fewer than three-quarters of banks had reported. Sector growth rates are like-for-like (only banks reporting in both periods).</div></div>
+</div>
+
+<div class="filters" role="region" aria-label="Filters"><div class="wrap">
+  <div class="fgroup"><span class="flabel">Period</span><div class="seg wrapok" id="perSeg"></div></div>
+  <div class="fgroup"><span class="flabel">Peers</span><div class="seg" id="grpSeg"><button type="button" data-v="all">All</button><button type="button" data-v="isl">Islamic</button><button type="button" data-v="conv">Conventional</button></div></div>
+  <div class="fgroup"><label class="flabel" for="focusSel">Focus bank</label><select id="focusSel"></select></div>
+  <button class="reset" id="resetBtn" type="button">Reset</button>
+</div></div>
+
+<main class="wrap">
+  <div class="kpis k8" id="kpi1"></div>
+  <div class="kpis k8" id="kpi2"></div>
+
+  <div class="card insights"><h2 id="insTitle">Key findings</h2><ul id="ins"></ul></div>
+
+  <div class="grid32">
+    <div class="stack">
+    <div class="card panel">
+      <div class="panelhead"><div><h2>Peer ranking</h2><p class="sub" id="rankSub"></p></div>
+        <select id="metricSel" aria-label="Metric"></select></div>
+      <div class="legend"><span><i class="sw" style="background:var(--actual)"></i>Focus bank</span><span><i class="sw" style="background:var(--budget)"></i>Peers</span><span><i class="ln dash" style="border-color:var(--ink-2)"></i><span id="benchLbl">Sector benchmark</span></span></div>
+      <div class="chart" id="rank"></div>
+    </div>
+    <div class="card panel">
+    <h2 id="trendTitle">Trend</h2>
+    <p class="sub" id="trendSub"></p>
+    <div class="legend"><span><i class="ln" style="border-color:var(--actual)"></i><span id="trendFocusLbl">Focus bank</span></span><span><i class="ln dash" style="border-color:var(--ink-2)"></i>Sector benchmark</span><span><i class="ln" style="border-color:var(--grid)"></i>Other banks</span></div>
+    <div class="chart" id="trend"></div>
+  </div>
+    </div>
+    <div class="card panel">
+      <h2 id="scTitle">Focus bank scorecard</h2>
+      <p class="sub">Rank among reporting peers (1 = best) · A–E = rating band · click a row to chart that metric</p>
+      <div class="tablewrap"><table class="sc" id="sc"></table></div>
+    </div>
+  </div>
+
+  <div class="card panel full">
+    <h2>Risk vs return</h2>
+    <p class="sub" id="scatSub"></p>
+    <div class="legend"><span><i class="dot" style="background:var(--s1)"></i>Islamic banks</span><span><i class="dot" style="background:var(--s2)"></i>Conventional banks</span><span>Bubble size = total assets</span></div>
+    <div class="chart" id="scat"></div>
+  </div>
+
+  <div class="card panel full">
+    <h2>League table</h2>
+    <p class="sub" id="ltSub">Click a column to sort, or a row to focus that bank.</p>
+    <div class="lt-wrap"><table class="lt" id="lt"></table></div>
+  </div>
+
+  <section class="about">
+    <div class="card panel">
+      <h2>About this analysis</h2>
+      <p><b>Business question:</b> How does each Syrian private bank compare with its peers on scale, profitability, efficiency, credit risk, liquidity and capital, and how is that changing quarter to quarter?</p>
+      <p><b>Approach:</b> Quarterly balance sheets, income statements and capital disclosures for 15 banks were compiled into a single dataset, cleaned in Power Query and modelled in Power BI. The original report has 24 pages and more than 100 DAX measures covering market share, rankings, sector benchmarks and A–E ratings. Profit figures are <b>adjusted</b> to strip out unrealised structural FX revaluation, which otherwise dominates Syrian bank earnings when the pound moves.</p>
+      <p><b>What this view adds:</b> any bank can be the focus, Islamic and conventional peer groups, annualised interim returns so quarters are comparable, like-for-like growth rates, a risk–return map, and a sortable league table.</p>
+      <h2 style="margin-top:14px">Definitions</h2>
+      <ul class="def">
+        <li><b>ROA / ROE:</b> adjusted net income ÷ total assets / adjusted equity, annualised for Q1–Q3</li>
+        <li><b>Cost-to-income:</b> operating expenses (excl. ECL) ÷ adjusted operating income</li>
+        <li><b>NPL ratio:</b> non-performing facilities ÷ gross direct facilities</li>
+        <li><b>NPL coverage:</b> ECL provisions ÷ NPLs (n.m. when NPL ratio &lt; 0.5%)</li>
+        <li><b>Loan-to-deposit:</b> net direct facilities ÷ customer deposits</li>
+        <li><b>Liquidity ratio:</b> liquid assets ÷ (liabilities + off-balance-sheet commitments)</li>
+        <li><b>Market-funds ratio:</b> (non-customer liabilities − liquid assets) ÷ total assets; lower is safer</li>
+        <li><b>CAR:</b> regulatory capital ÷ risk-weighted assets</li>
+        <li><b>Benchmarks:</b> sector aggregates (Σ numerator ÷ Σ denominator); CAR and liquidity use simple averages, as in the original model</li>
+        <li><b>Ratings A–E:</b> CAR &gt;10.5 / 8.4 / 6.3 / 4.2%; CIR &lt;45 / 55 / 65 / 80%; market funds &lt;−10 / 0 / 10 / 20%</li>
+      </ul>
+    </div>
+    <div class="card panel">
+      <h2>Model</h2>
+      <dl>
+        <dt>Tools</dt><dd>Power BI Desktop · Power Query (M) · DAX · Excel</dd>
+        <dt>Coverage</dt><dd>15 banks · 5 quarters shown (10 in source)</dd>
+        <dt>Original report</dt><dd>24 pages: balance sheet, P&amp;L, ratios, liquidity, financing, NPL coverage, deposits, funding mix, equity, CIR, FX revenue, LTD, ROA/ROE, CAR, market cap, L/C and L/G</dd>
+        <dt>Source</dt><dd><a href="https://scfms.sy/en/declaration" rel="noopener">SCFMS disclosures</a></dd>
+        <dt>Note</dt><dd>Bemo Saudi Fransi is shown standalone; its consolidated group figure is excluded to avoid double counting.</dd>
+      </dl>
+    </div>
+  </section>
+  <a class="backbtn bottom" href="../../index.html">← Back to all projects</a>
+</main>
+
+<footer><div class="wrap">Interactive web version of a Power BI report, built by Jamal Kanbarieh from public disclosures. Not investment advice.</div></footer>
+
+<script src="../../assets/common.js"></script>
+<script>
+const SRC = __DATA__;
+const PERIODS = SRC.periods, NAMES = SRC.names, ISL = new Set(SRC.islamic);
+const QN = p => +p[1]; // quarter number
+const ANN = p => 4 / QN(p);
+const state = { p: PERIODS[PERIODS.length - 1], grp: "all", focus: null, metric: "roa" };
+
+/* ---------- metric catalogue ---------- */
+const dep = d => d.ca + d.td;
+const M = [
+  { k: "ta", g: "Size & share", l: "Total assets", t: "money", b: "high", v: d => d.ta, agg: r => sumK(r, "ta") },
+  { k: "ta_sh", g: "Size & share", l: "Asset market share", t: "pct", b: "high", share: "ta" },
+  { k: "nl", g: "Size & share", l: "Net financing", t: "money", b: "high", v: d => d.nl, agg: r => sumK(r, "nl") },
+  { k: "dep", g: "Size & share", l: "Customer deposits", t: "money", b: "high", v: d => dep(d), agg: r => r.reduce((t, x) => t + dep(x.d), 0) },
+  { k: "dep_sh", g: "Size & share", l: "Deposit market share", t: "pct", b: "high", share: "dep" },
+  { k: "ni", g: "Profitability", l: "Adj. net income (YTD)", t: "money", b: "high", v: d => d.ni, agg: r => sumK(r, "ni") },
+  { k: "roa", g: "Profitability", l: "Adj. ROA (annualised)", t: "pct", b: "high", v: (d, p) => d.ni / d.ta * ANN(p), bench: (r, p) => ratioAgg(r, x => x.ni, x => x.ta) * ANN(p) },
+  { k: "roe", g: "Profitability", l: "Adj. ROE (annualised)", t: "pct", b: "high", v: (d, p) => d.eqa > 0 ? d.ni / d.eqa * ANN(p) : null, bench: (r, p) => ratioAgg(r.filter(x => x.d.eqa > 0), x => x.ni, x => x.eqa) * ANN(p) },
+  { k: "fx", g: "Profitability", l: "FX revenues (YTD)", t: "money", b: "high", v: d => d.fx, agg: r => sumK(r, "fx") },
+  { k: "cir", g: "Efficiency", l: "Adj. cost-to-income", t: "pct", b: "low", v: d => d.goi > 0 ? Math.abs(d.opx) / d.goi : null, bench: r => ratioAgg(r.filter(x => x.d.goi > 0), x => Math.abs(x.opx), x => x.goi), rate: v => v < .45 ? "A" : v < .55 ? "B" : v < .65 ? "C" : v < .80 ? "D" : "E" },
+  { k: "npl", g: "Asset quality", l: "NPL ratio", t: "pct", b: "low", v: d => d.gl > 0 ? d.npl / d.gl : null, bench: r => ratioAgg(r.filter(x => x.d.gl > 0), x => x.npl, x => x.gl) },
+  { k: "cov", g: "Asset quality", l: "NPL coverage", t: "pct", b: "high", v: d => (d.gl > 0 && d.npl / d.gl >= .005) ? d.ecl / d.npl : null, bench: r => ratioAgg(r.filter(x => x.d.gl > 0 && x.d.npl / x.d.gl >= .005), x => x.ecl, x => x.npl) },
+  { k: "ltd", g: "Liquidity & funding", l: "Loan-to-deposit", t: "pct", b: null, v: d => d.nl / dep(d), bench: r => ratioAgg(r, x => x.nl, x => dep(x)) },
+  { k: "liq", g: "Liquidity & funding", l: "Liquidity ratio", t: "pct", b: "high", v: d => d.r_liq, bench: r => avg(r.map(x => x.d.r_liq)) },
+  { k: "mf", g: "Liquidity & funding", l: "Market-funds ratio", t: "pct", b: "low", v: d => ((d.tl - d.cm - d.td - d.ca) - d.liq) / d.ta, bench: r => ratioAgg(r, x => (x.tl - x.cm - x.td - x.ca) - x.liq, x => x.ta), rate: v => v < -.10 ? "A" : v < 0 ? "B" : v < .10 ? "C" : v < .20 ? "D" : "E" },
+  { k: "casa", g: "Liquidity & funding", l: "Current accounts / deposits", t: "pct", b: "high", v: d => d.ca / dep(d), bench: r => ratioAgg(r, x => x.ca, x => dep(x)) },
+  { k: "car", g: "Capital", l: "Capital adequacy (CAR)", t: "pct", b: "high", v: d => d.car, bench: r => avg(r.map(x => x.d.car)), rate: v => v > .105 ? "A" : v > .084 ? "B" : v > .063 ? "C" : v > .042 ? "D" : "E" },
+  { k: "eqta", g: "Capital", l: "Equity / assets", t: "pct", b: "high", v: d => d.eqi / d.ta, bench: r => ratioAgg(r, x => x.eqi, x => x.ta) },
+  { k: "mcap", g: "Market", l: "Market capitalisation", t: "money", b: "high", v: d => d.mcap, agg: r => sumK(r, "mcap") },
+  { k: "pbv", g: "Market", l: "Price / book", t: "x", b: null, v: d => d.eqi > 0 ? d.mcap / d.eqi : null, bench: r => ratioAgg(r.filter(x => x.d.eqi > 0), x => x.mcap, x => x.eqi) },
+];
+const MK = Object.fromEntries(M.map(m => [m.k, m]));
+function sumK(rows, k) { return rows.reduce((t, x) => t + (x.d[k] || 0), 0); }
+function ratioAgg(rows, num, den) { let a = 0, b = 0; for (const x of rows) { const n = num(x.d), dd = den(x.d); if (n == null || dd == null || !isFinite(n) || !isFinite(dd)) continue; a += n; b += dd; } return b ? a / b : null; }
+function median(a) { a = a.filter(v => v != null).sort((x, y) => x - y); const n = a.length; return n ? (n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2) : null; }
+function avg(a) { a = a.filter(v => v != null && isFinite(v)); return a.length ? a.reduce((x, y) => x + y, 0) / a.length : null; }
+
+function inGroup(code) { return state.grp === "all" || (state.grp === "isl" ? ISL.has(code) : !ISL.has(code)); }
+function rowsFor(p) { const D = SRC.data[p] || {}; return Object.keys(D).filter(inGroup).map(c => ({ c, d: D[c] })); }
+function val(m, d, p, rows) {
+  if (m.share) { const tot = m.share === "ta" ? sumK(rows, "ta") : rows.reduce((t, x) => t + dep(x.d), 0); return (m.share === "ta" ? d.ta : dep(d)) / tot; }
+  const v = m.v(d, p); return (v == null || !isFinite(v)) ? null : v;
+}
+function bench(m, rows, p) {
+  if (m.share) return rows.length ? 1 / rows.length : null;
+  if (m.bench) return m.bench(rows, p);
+  if (m.agg) return m.agg(rows) / rows.length; // per-bank average for money metrics
+  return null;
+}
+function benchName(m) { return m.share ? "Equal share (1 ÷ n)" : m.agg ? "Peer average" : (m.k === "car" || m.k === "liq") ? "Peer simple average" : "Sector aggregate"; }
+function fmtv(m, v) { if (v == null) return "n.m."; return m.t === "money" ? compact(v, "SYP ") : m.t === "x" ? v.toFixed(2) + "×" : pctP(v); }
+function ranked(m, p, rows) {
+  const list = rows.map(x => ({ c: x.c, v: val(m, x.d, p, rows) }));
+  const ok = list.filter(x => x.v != null);
+  ok.sort((a, b) => m.b === "low" ? a.v - b.v : b.v - a.v);
+  ok.forEach((x, i) => x.rank = m.b ? i + 1 : null);
+  return { ok, na: list.filter(x => x.v == null), n: ok.length };
+}
+const lbl = c => NAMES[c] || c;
+
+/* ---------- controls ---------- */
+function build() {
+  const ps = $("perSeg");
+  PERIODS.forEach(p => ps.appendChild(h("button", { type: "button", "data-v": p, text: p })));
+  segBind("perSeg", null, v => state.p = v, () => { ensureFocus(); render(); });
+  segBind("grpSeg", null, v => state.grp = v, () => { ensureFocus(); render(); });
+  const ms = $("metricSel"); let g;
+  for (const m of M) { if (m.g !== g) { g = h("optgroup", { label: m.g }); ms.appendChild(g); } g.appendChild(h("option", { value: m.k, text: m.l })); }
+  ms.onchange = () => { state.metric = ms.value; render(); };
+  $("focusSel").onchange = e => { state.focus = e.target.value; render(); };
+  $("resetBtn").onclick = () => { state.p = PERIODS[PERIODS.length - 1]; state.grp = "all"; state.metric = "roa"; state.focus = null; ensureFocus(); render(); };
+  initTheme(render);
+}
+function ensureFocus() {
+  const rows = rowsFor(state.p);
+  if (!state.focus || !rows.find(r => r.c === state.focus)) state.focus = rows.slice().sort((a, b) => b.d.ta - a.d.ta)[0].c;
+}
+function setFocus(c) { state.focus = c; render(); }
+function syncControls() {
+  segSync("perSeg", state.p); segSync("grpSeg", state.grp);
+  $("metricSel").value = state.metric;
+  const fs = $("focusSel"); fs.replaceChildren();
+  rowsFor(state.p).sort((a, b) => lbl(a.c).localeCompare(lbl(b.c))).forEach(r => fs.appendChild(h("option", { value: r.c, text: `${lbl(r.c)} (${r.c})` })));
+  fs.value = state.focus;
+}
+function prevPeriod(p) { const i = PERIODS.indexOf(p); return i > 0 ? PERIODS[i - 1] : null; }
+function yoyPeriod(p) { const i = PERIODS.indexOf(p); return i >= 4 ? PERIODS[i - 4] : null; }
+
+/* ---------- KPIs ---------- */
+function lflGrowth(key, p, p0) {
+  if (!p0) return null;
+  const now = rowsFor(p), before = SRC.data[p0];
+  const common = now.filter(r => before[r.c]);
+  const f = typeof key === "function" ? key : (d => d[key]);
+  const a = common.reduce((t, r) => t + f(r.d), 0), b = common.reduce((t, r) => t + f(before[r.c]), 0);
+  return b ? a / b - 1 : null;
+}
+function renderKPIs() {
+  const p = state.p, rows = rowsFor(p), p0 = yoyPeriod(p) || prevPeriod(p), cmpLbl = yoyPeriod(p) ? "YoY" : "QoQ";
+  const all = Object.keys(SRC.data[p]).length, tot = Object.keys(SRC.data[PERIODS[0]]).filter(inGroup).length;
+  const g = (k) => { const v = lflGrowth(k, p, p0); return v == null ? "First period shown" : `${v >= 0 ? "▲" : "▼"} ${pctS(v)} ${cmpLbl} like-for-like`; };
+  const gc = (k) => { const v = lflGrowth(k, p, p0); return v == null ? "" : v >= 0 ? "up" : "down"; };
+  const r1 = [
+    { k: "Total assets", v: compact(sumK(rows, "ta"), "SYP "), s: g("ta"), c: gc("ta") },
+    { k: "Net financing", v: compact(sumK(rows, "nl"), "SYP "), s: g("nl"), c: gc("nl") },
+    { k: "Customer deposits", v: compact(rows.reduce((t, x) => t + dep(x.d), 0), "SYP "), s: g(dep), c: gc(dep) },
+    { k: "Banks reporting", v: `${rows.length} of ${tot}`, s: rows.length < tot ? "Non-reporting banks hidden" : "Full coverage" },
+  ];
+  const roa = MK.roa.bench(rows, p), npl = MK.npl.bench(rows, p), cir = MK.cir.bench(rows, p), car = MK.car.bench(rows, p);
+  const r2 = [
+    { k: "Adj. net income (YTD)", v: compact(sumK(rows, "ni"), "SYP "), s: `${rows.filter(r => r.d.ni < 0).length} bank(s) loss-making` },
+    { k: "Aggregate ROA", v: pctP(roa, 2), s: QN(p) === 4 ? "Full year" : "Annualised" },
+    { k: "Aggregate NPL ratio", v: pctP(npl), s: `Median bank ${pctP(median(rows.map(r => MK.npl.v(r.d, p))))} · coverage ${pctP(MK.cov.bench(rows, p), 0)}` },
+    { k: "Aggregate cost-to-income", v: pctP(cir), s: `Average CAR ${pctP(car, 0)}` },
+  ];
+  for (const [id, items] of [["kpi1", r1], ["kpi2", r2]]) {
+    $(id).replaceChildren(...items.map(it => h("div", { class: "card kpi" }, h("div", { class: "k", text: it.k }), h("div", { class: "v", text: it.v }), h("div", { class: "s" + (it.c ? " " + it.c : ""), text: it.s }))));
+  }
+}
+
+/* ---------- insights ---------- */
+function renderInsights() {
+  const p = state.p, rows = rowsFor(p), ul = $("ins"); ul.replaceChildren();
+  $("insTitle").textContent = `Key findings · ${p} · ${state.grp === "all" ? "all banks" : state.grp === "isl" ? "Islamic banks" : "conventional banks"}`;
+  const add = (...parts) => ul.appendChild(h("li", {}, ...parts.map(x => typeof x === "string" ? document.createTextNode(x) : h("b", { text: x.b }))));
+  const ta = ranked(MK.ta_sh, p, rows).ok, top3 = ta.slice(0, 3).reduce((t, x) => t + x.v, 0);
+  add({ b: lbl(ta[0].c) }, ` is the largest bank with ${pctP(ta[0].v)} of assets. The top three hold `, { b: pctP(top3) }, " of the group's balance sheet.");
+  const roa = ranked(MK.roa, p, rows).ok, loss = rows.filter(r => r.d.ni < 0).map(r => r.c);
+  add("Most profitable on assets: ", { b: `${lbl(roa[0].c)} (${pctP(roa[0].v, 2)})` }, ". ", loss.length ? `${loss.length} of ${rows.length} banks reported an adjusted loss (${loss.join(", ")}).` : "Every bank reported an adjusted profit.");
+  const npl = ranked(MK.npl, p, rows).ok, hi = npl.filter(x => x.v > .10);
+  add({ b: `${hi.length} of ${npl.length}` }, ` banks carry NPL ratios above 10%. The worst is ${lbl(npl[npl.length - 1].c)} at `, { b: pctP(npl[npl.length - 1].v) }, `, against a sector aggregate of ${pctP(MK.npl.bench(rows, p))}.`);
+  const ltd = MK.ltd.bench(rows, p);
+  add("Lending stays thin: the aggregate loan-to-deposit ratio is ", { b: pctP(ltd) }, ". Balance sheets are dominated by liquid assets, typical of a market with limited credit demand and high FX uncertainty.");
+  const f = state.focus, fr = rowsFor(p).find(r => r.c === f);
+  if (fr) {
+    const strengths = [], weak = [];
+    for (const m of M) { if (!m.b || m.agg || m.share) continue; const r = ranked(m, p, rows); const me = r.ok.find(x => x.c === f); if (!me) continue; if (me.rank <= Math.max(2, Math.round(r.n * .2))) strengths.push(m.l); if (me.rank > r.n - Math.max(2, Math.round(r.n * .2))) weak.push(m.l); }
+    add({ b: lbl(f) }, " ranks in the top tier on ", { b: strengths.slice(0, 3).join(", ") || "none of the ratio metrics" }, weak.length ? `, and in the bottom tier on ${weak.slice(0, 3).join(", ")}.` : ", with no bottom-tier ratios.");
+  }
+}
+
+/* ---------- ranking chart ---------- */
+function renderRank() {
+  const box = $("rank"); box.replaceChildren();
+  const m = MK[state.metric], p = state.p, rows = rowsFor(p), R = ranked(m, p, rows), list = [...R.ok, ...R.na];
+  const W = Math.max(300, box.clientWidth), narrow = W < 560, labelW = narrow ? 52 : 190, valW = 70, rowH = 26, top = 4, bottom = 22;
+  const H = top + rowH * list.length + bottom;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `Ranking of banks by ${m.l}` }, box);
+  const vals = R.ok.map(x => x.v), B = bench(m, rows, p);
+  let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals);
+  // clip extreme outliers so the rest stay readable
+  const abs = vals.map(Math.abs).sort((a, b) => a - b), p75 = abs[Math.floor(abs.length * .75)] || 0, lim = p75 * 2.5;
+  let clipped = false;
+  if (m.t !== "money" && lim > 0) { if (hi > lim) { hi = lim; clipped = true; } if (lo < -lim) { lo = -lim; clipped = true; } }
+  if (B != null) { hi = Math.max(hi, B); lo = Math.min(lo, B); }
+  const ticks = niceTicks(lo, hi, narrow ? 3 : 4); lo = Math.min(lo, ticks[0]); hi = Math.max(hi, ticks[ticks.length - 1]);
+  const x0 = labelW, x1 = W - valW, sx = v => x0 + (x1 - x0) * (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo);
+  for (const t of ticks) { const x = sx(t); el("line", { x1: x, x2: x, y1: top, y2: H - bottom, stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, x, H - 6, m.t === "money" ? compact(t, "") : m.t === "x" ? t.toFixed(1) + "×" : (t * 100).toFixed(0) + "%", { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  list.forEach((x, i) => {
+    const y = top + i * rowH + 4, bh = rowH - 9, isF = x.c === state.focus;
+    const g = el("g", { class: "hit", tabindex: 0, role: "button", "aria-label": `${lbl(x.c)}: ${fmtv(m, x.v)}${x.rank ? ", rank " + x.rank : ""}` }, svg);
+    el("rect", { x: 0, y: y - 4, width: W, height: rowH, fill: isF ? "var(--accent)" : "transparent", opacity: isF ? .07 : 1 }, g);
+    txt(g, 0, y + bh / 2, (x.rank ? x.rank + ". " : "") + (narrow ? x.c : lbl(x.c)), { "dominant-baseline": "middle", "font-size": 12, fill: isF ? "var(--ink)" : "var(--ink-2)", "font-weight": isF ? 650 : 400 });
+    if (x.v != null) {
+      const a = sx(0), b = sx(x.v), fill = isF ? "var(--actual)" : "var(--budget)";
+      el("path", { d: x.v >= 0 ? rr(a, y, b - a, bh, 3) : rl(b, y, a - b, bh, 3), fill, class: "mk" }, g);
+      if ((x.v > hi || x.v < lo)) { const cx = x.v > hi ? sx(hi) - 8 : sx(lo) + 8; el("path", { d: `M${cx - 3},${y - 1} l6,${bh + 2}`, stroke: "var(--surface)", "stroke-width": 3 }, g); }
+      txt(g, W, y + bh / 2, fmtv(m, x.v), { "text-anchor": "end", "dominant-baseline": "middle", "font-size": 12, fill: "var(--ink)", "font-weight": isF ? 650 : 500 });
+    } else txt(g, x0 + 4, y + bh / 2, "n.m. (not meaningful)", { "dominant-baseline": "middle", "font-size": 11.5, fill: "var(--muted)" });
+    bindTip(g, () => [`${lbl(x.c)} (${x.c}) · ${p}`, [{ label: m.l, value: fmtv(m, x.v) }, ...(x.rank ? [{ label: "Rank", value: `${x.rank} of ${R.n}` }] : []), ...(B != null ? [{ label: benchName(m), value: fmtv(m, B) }] : [])]]);
+    onActivate(g, () => setFocus(x.c));
+  });
+  if (B != null) { const bx = sx(B); el("line", { x1: bx, x2: bx, y1: top - 2, y2: H - bottom, stroke: "var(--ink-2)", "stroke-width": 1.5, "stroke-dasharray": "4 3" }, svg); }
+  $("benchLbl").textContent = B != null ? `${benchName(m)}: ${fmtv(m, B)}` : "No benchmark";
+  $("rankSub").textContent = `${m.l} · ${p} · ${R.n} banks${m.b ? (m.b === "low" ? " · lower is better" : " · higher is better") : ""}${clipped ? " · extreme values clipped (⫽), labels show true values" : ""}`;
+}
+
+/* ---------- scorecard ---------- */
+function renderScorecard() {
+  const t = $("sc"); t.replaceChildren();
+  const p = state.p, rows = rowsFor(p), f = state.focus, fr = rows.find(r => r.c === f), pp = prevPeriod(p);
+  $("scTitle").textContent = `${lbl(f)} scorecard`;
+  t.appendChild(h("thead", {}, h("tr", {}, h("th", { text: "Metric" }), h("th", { text: "Value" }), h("th", { text: "Rank" }), h("th", { text: "Sector" }))));
+  const tb = h("tbody"); let g;
+  for (const m of M) {
+    if (m.g !== g) { g = m.g; tb.appendChild(h("tr", { class: "grp" }, h("td", { colspan: 4, text: g }))); }
+    const v = val(m, fr.d, p, rows), R = ranked(m, p, rows), me = R.ok.find(x => x.c === f), B = bench(m, rows, p);
+    let cls = "";
+    if (m.b && v != null && B != null && !m.agg) cls = (m.b === "high" ? v >= B : v <= B) ? "up" : "down";
+    const rate = m.rate && v != null ? m.rate(v) : null;
+    const tr = h("tr", { class: "m" + (m.k === state.metric ? " cur" : ""), tabindex: 0 },
+      h("td", {}, document.createTextNode(m.l + " "), rate ? h("span", { class: "badge", title: "Rating A (strongest) – E", text: rate }) : null),
+      h("td", { class: cls, text: fmtv(m, v) }),
+      h("td", { class: "rank", text: me && me.rank ? `${me.rank}/${R.n}` : "—" }),
+      h("td", { class: "rank", text: B == null ? "—" : fmtv(m, B) }));
+    onActivate(tr, () => { state.metric = m.k; render(); });
+    tb.appendChild(tr);
+  }
+  t.appendChild(tb);
+}
+
+/* ---------- trend ---------- */
+function renderTrend() {
+  const box = $("trend"); box.replaceChildren();
+  const m = MK[state.metric], f = state.focus, W = Math.max(300, box.clientWidth), narrow = W < 560;
+  const left = narrow ? 52 : 60, right = narrow ? 14 : 110, top = 12, bottom = 28, H = narrow ? 240 : 300;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${m.l} trend` }, box);
+  const series = {}, bseries = [];
+  for (const p of PERIODS) {
+    const rows = rowsFor(p); bseries.push(rows.length ? bench(m, rows, p) : null);
+    for (const r of rows) (series[r.c] ||= Array(PERIODS.length).fill(null))[PERIODS.indexOf(p)] = val(m, r.d, p, rows);
+  }
+  const fv = series[f] || [];
+  let all = Object.values(series).flat().filter(v => v != null).sort((a, b) => a - b);
+  const q = k => all[Math.min(all.length - 1, Math.max(0, Math.floor(all.length * k)))];
+  let lo = Math.min(q(.05), ...fv.filter(v => v != null), ...bseries.filter(v => v != null));
+  let hi = Math.max(q(.95), ...fv.filter(v => v != null), ...bseries.filter(v => v != null));
+  if (m.t === "money" || (lo >= 0 && m.t !== "x")) lo = Math.min(0, lo);
+  const ticks = niceTicks(lo, hi, 4); lo = ticks[0]; hi = ticks[ticks.length - 1];
+  const sx = i => left + (W - left - right) * i / (PERIODS.length - 1), sy = v => top + (H - top - bottom) * (1 - (v - lo) / (hi - lo));
+  const clipId = "tclip"; const cp = el("clipPath", { id: clipId }, el("defs", {}, svg)); el("rect", { x: left - 6, y: top - 4, width: W - left - right + 12, height: H - top - bottom + 8 }, cp);
+  for (const t of ticks) { const y = sy(t); el("line", { x1: left, x2: W - right, y1: y, y2: y, stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, left - 8, y, m.t === "money" ? compact(t, "") : m.t === "x" ? t.toFixed(1) + "×" : (t * 100).toFixed(m.k === "roa" ? 1 : 0) + "%", { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  PERIODS.forEach((p, i) => txt(svg, sx(i), H - 8, narrow ? p.replace(" 20", " '") : p, { "text-anchor": "middle", fill: p === state.p ? "var(--ink)" : "var(--muted)", "font-size": 11, "font-weight": p === state.p ? 650 : 400 }));
+  el("line", { x1: sx(PERIODS.indexOf(state.p)), x2: sx(PERIODS.indexOf(state.p)), y1: top, y2: H - bottom, stroke: "var(--accent)", opacity: .25, "stroke-width": 8 }, svg);
+  const line = arr => { let d = "", pen = false; arr.forEach((v, i) => { if (v == null) { pen = false; return; } d += (pen ? "L" : "M") + sx(i) + "," + sy(v); pen = true; }); return d; };
+  const g = el("g", { "clip-path": `url(#${clipId})` }, svg);
+  for (const c in series) if (c !== f) el("path", { d: line(series[c]), fill: "none", stroke: "var(--grid)", "stroke-width": 1.5 }, g);
+  el("path", { d: line(bseries), fill: "none", stroke: "var(--ink-2)", "stroke-width": 2, "stroke-dasharray": "5 4" }, g);
+  el("path", { d: line(fv), fill: "none", stroke: "var(--actual)", "stroke-width": 2.5 }, g);
+  fv.forEach((v, i) => v != null && el("circle", { cx: sx(i), cy: sy(v), r: 4, fill: "var(--actual)", stroke: "var(--surface)", "stroke-width": 2 }, g));
+  if (!narrow) {
+    const li = fv.length - 1 - [...fv].reverse().findIndex(v => v != null);
+    if (fv[li] != null) txt(svg, sx(PERIODS.length - 1) + 12, sy(fv[li]), f + " " + fmtv(m, fv[li]), { "dominant-baseline": "middle", fill: "var(--ink)", "font-size": 12, "font-weight": 650 });
+    const lb = bseries[bseries.length - 1]; if (lb != null) txt(svg, sx(PERIODS.length - 1) + 12, sy(lb) + (Math.abs(sy(lb) - sy(fv[li] ?? lb)) < 14 ? 15 : 0), "Sector " + fmtv(m, lb), { "dominant-baseline": "middle", fill: "var(--ink-2)", "font-size": 12 });
+  }
+  const cross = el("line", { y1: top, y2: H - bottom, stroke: "var(--ink-2)", opacity: 0 }, svg);
+  const hit = el("rect", { x: left - 20, y: top, width: W - left - right + 40, height: H - top - bottom, fill: "transparent", style: "cursor:crosshair" }, svg);
+  const mv = e => { const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width; const i = Math.max(0, Math.min(PERIODS.length - 1, Math.round((px - left) / ((W - left - right) / (PERIODS.length - 1))))); cross.setAttribute("x1", sx(i)); cross.setAttribute("x2", sx(i)); cross.setAttribute("opacity", .4);
+    const rk = SRC.data[PERIODS[i]][f] ? ranked(m, PERIODS[i], rowsFor(PERIODS[i])).ok.find(x => x.c === f) : null;
+    showTip(e, `${PERIODS[i]} · ${m.l}`, [{ label: lbl(f), value: fv[i] == null ? "not reported" : fmtv(m, fv[i]), color: css("--actual") }, { label: "Sector benchmark", value: fmtv(m, bseries[i]), color: css("--ink-2"), dash: true }, ...(rk && rk.rank ? [{ label: "Rank", value: `${rk.rank} of ${ranked(m, PERIODS[i], rowsFor(PERIODS[i])).n}` }] : [])]); };
+  hit.addEventListener("pointermove", mv); hit.addEventListener("pointerdown", mv); hit.addEventListener("pointerleave", () => { hideTip(); cross.setAttribute("opacity", 0); });
+  $("trendTitle").textContent = `${m.l}: ${lbl(f)} vs sector`;
+  $("trendFocusLbl").textContent = lbl(f);
+  $("trendSub").textContent = `Q4 2023 – Q4 2024 · grey lines = every other reporting bank (outliers beyond the 5th–95th percentile are cut off) · benchmark is recomputed for the banks reporting each quarter`;
+}
+
+/* ---------- scatter ---------- */
+function renderScatter() {
+  const box = $("scat"); box.replaceChildren();
+  const p = state.p, rows = rowsFor(p), W = Math.max(300, box.clientWidth), narrow = W < 560;
+  const left = narrow ? 44 : 60, right = 16, top = 14, bottom = 40, H = narrow ? 300 : 380;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "NPL ratio versus ROA" }, box);
+  const pts = rows.map(r => ({ c: r.c, x: MK.npl.v(r.d, p), y: MK.roa.v(r.d, p), s: r.d.ta })).filter(o => o.x != null && o.y != null);
+  const xt = niceTicks(0, Math.max(...pts.map(o => o.x)) * 1.05, narrow ? 4 : 5), yt = niceTicks(Math.min(0, ...pts.map(o => o.y)) * 1.1, Math.max(0, ...pts.map(o => o.y)) * 1.25, 4);
+  const sx = v => left + (W - left - right) * (v - xt[0]) / (xt[xt.length - 1] - xt[0]), sy = v => top + (H - top - bottom) * (1 - (v - yt[0]) / (yt[yt.length - 1] - yt[0]));
+  const smax = Math.max(...pts.map(o => o.s)), rad = s => 5 + (narrow ? 13 : 20) * Math.sqrt(s / smax);
+  for (const t of xt) { el("line", { x1: sx(t), x2: sx(t), y1: top, y2: H - bottom, stroke: "var(--grid)" }, svg); txt(svg, sx(t), H - bottom + 16, (t * 100).toFixed(0) + "%", { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  for (const t of yt) { el("line", { x1: left, x2: W - right, y1: sy(t), y2: sy(t), stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, left - 8, sy(t), (t * 100).toFixed(1) + "%", { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  txt(svg, (left + W - right) / 2, H - 4, "NPL ratio →  (higher = weaker asset quality)", { "text-anchor": "middle", fill: "var(--ink-2)", "font-size": 11.5 });
+  pts.sort((a, b) => b.s - a.s).forEach(o => {
+    const isF = o.c === state.focus, col = ISL.has(o.c) ? "var(--s1)" : "var(--s2)";
+    const g = el("g", { class: "hit", tabindex: 0, role: "button", "aria-label": `${lbl(o.c)}: NPL ${pctP(o.x)}, ROA ${pctP(o.y, 2)}` }, svg);
+    el("circle", { cx: sx(o.x), cy: sy(o.y), r: Math.max(12, rad(o.s)), fill: "transparent" }, g);
+    el("circle", { cx: sx(o.x), cy: sy(o.y), r: rad(o.s), fill: col, "fill-opacity": isF ? .95 : .55, stroke: isF ? "var(--ink)" : "var(--surface)", "stroke-width": isF ? 2.5 : 1.5, class: "mk" }, g);
+    o.g = g; o.isF = isF;
+    bindTip(g, () => [`${lbl(o.c)} · ${p}`, [{ label: "NPL ratio", value: pctP(o.x) }, { label: "Adj. ROA", value: pctP(o.y, 2) }, { label: "Total assets", value: compact(o.s, "SYP ") }, { label: "Type", value: ISL.has(o.c) ? "Islamic" : "Conventional" }]]);
+    onActivate(g, () => setFocus(o.c));
+  });
+  // label placement: try right, left, above, below; skip if no free slot (tooltip still has it)
+  const boxes = pts.map(o => ({ x0: sx(o.x) - rad(o.s), x1: sx(o.x) + rad(o.s), y0: sy(o.y) - rad(o.s), y1: sy(o.y) + rad(o.s), c: o.c }));
+  const placed = [], hit2 = (a, b) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
+  const order = pts.slice().sort((a, b) => (b.isF - a.isF) || (b.s - a.s));
+  for (const o of order) {
+    const cx = sx(o.x), cy = sy(o.y), r = rad(o.s), w = o.c.length * 6.6 + 4, hh = 13;
+    const cands = [[cx + r + 3, cy - hh / 2], [cx - r - 3 - w, cy - hh / 2], [cx - w / 2, cy - r - hh - 2], [cx - w / 2, cy + r + 2], [cx + r * .7, cy - r - hh + 2], [cx + r * .7, cy + r - 2]];
+    for (const [lx, ly] of cands) {
+      const b = { x0: lx, x1: lx + w, y0: ly, y1: ly + hh };
+      if (b.x0 < left || b.x1 > W - right || b.y0 < top || b.y1 > H - bottom) continue;
+      if (placed.some(q => hit2(q, b)) || boxes.some(q => q.c !== o.c && hit2({ x0: q.x0 + 3, x1: q.x1 - 3, y0: q.y0 + 3, y1: q.y1 - 3 }, b))) continue;
+      placed.push(b);
+      txt(svg, lx + 2, ly + hh / 2, o.c, { "dominant-baseline": "middle", "font-size": 11, fill: o.isF ? "var(--ink)" : "var(--ink-2)", "font-weight": o.isF ? 700 : 400, "pointer-events": "none" });
+      break;
+    }
+  }
+  $("scatSub").textContent = `${p} · vertical axis: adj. ROA${QN(p) === 4 ? "" : " (annualised)"} · top-left is best (clean book, high return) · click a bubble to focus that bank`;
+}
+
+/* ---------- league table ---------- */
+const LT = ["ta_sh", "ta", "nl", "dep", "ni", "roa", "roe", "cir", "npl", "cov", "ltd", "liq", "car", "pbv"];
+let ltSort = { k: "ta", dir: -1 };
+function renderLeague() {
+  const t = $("lt"); t.replaceChildren();
+  const p = state.p, rows = rowsFor(p);
+  const hr = h("tr", {}, h("th", { text: "Bank" }));
+  for (const k of LT) {
+    const m = MK[k], th = h("th", { scope: "col", title: m.l, tabindex: 0 }, document.createTextNode((t => t[0].toUpperCase() + t.slice(1))(m.l.replace(" (annualised)", "").replace("Adj. ", ""))), h("span", { class: "ar", text: ltSort.k === k ? (ltSort.dir < 0 ? "▼" : "▲") : "▼" }));
+    if (ltSort.k === k) th.setAttribute("aria-sort", ltSort.dir < 0 ? "descending" : "ascending");
+    onActivate(th, () => { ltSort = { k, dir: ltSort.k === k ? -ltSort.dir : -1 }; renderLeague(); });
+    hr.appendChild(th);
+  }
+  t.appendChild(h("thead", {}, hr));
+  const data = rows.map(r => ({ c: r.c, v: Object.fromEntries(LT.map(k => [k, val(MK[k], r.d, p, rows)])) }));
+  data.sort((a, b) => { const x = a.v[ltSort.k], y = b.v[ltSort.k]; if (x == null) return 1; if (y == null) return -1; return (x - y) * ltSort.dir; });
+  const maxSh = Math.max(...data.map(d => d.v.ta_sh));
+  const tb = h("tbody");
+  for (const d of data) {
+    const tr = h("tr", { class: d.c === state.focus ? "focus" : "", tabindex: 0 }, h("td", {}, h("div", { class: "bk" }, document.createTextNode(lbl(d.c)), h("small", { text: `${d.c} · ${ISL.has(d.c) ? "Islamic" : "Conventional"}` }))));
+    for (const k of LT) {
+      const v = d.v[k], td = h("td", { class: v == null ? "nm" : "" });
+      if (k === "ta_sh" && v != null) { const b = h("span", { class: "cellbar" }); b.style.width = Math.round(40 * v / maxSh) + "px"; td.appendChild(b); }
+      td.append(document.createTextNode(fmtv(MK[k], v)));
+      tr.appendChild(td);
+    }
+    onActivate(tr, () => setFocus(d.c));
+    tb.appendChild(tr);
+  }
+  t.appendChild(tb);
+  $("ltSub").textContent = `${p} · ${rows.length} banks · click a column header to sort, or a row to focus that bank · n.m. = not meaningful (e.g. negative equity)`;
+}
+
+function render() { syncControls(); renderKPIs(); renderInsights(); renderRank(); renderScorecard(); renderTrend(); renderScatter(); renderLeague(); }
+build(); ensureFocus(); render(); onResize(render);
+</script>
+</body>
+</html>

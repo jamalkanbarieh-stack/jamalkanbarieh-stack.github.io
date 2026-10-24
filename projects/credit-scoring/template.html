@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bank Credit Scoring Model</title>
+<meta name="description" content="Interactive bank counterparty credit scoring model by Jamal Kanbarieh: CAMELS-style scorecard, internal rating and indicative PD, with a downloadable Excel model.">
+<link rel="stylesheet" href="../../assets/site.css">
+<style>
+.inp{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.inp td{padding:4px 6px;border-bottom:1px solid var(--grid)}
+.inp td:last-child{text-align:right}
+.inp input{width:130px;max-width:100%;text-align:right;font:inherit;font-size:13px;border:1px solid var(--ring);border-radius:6px;padding:4px 6px;background:var(--surface);color:#0000ff}
+:root[data-theme="dark"] .inp input{color:#7fa8ff}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) .inp input{color:#7fa8ff}}
+.inp input.chg{background:#ffff0033;border-color:#c98500}
+.res{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.big{font-size:44px;font-weight:700;letter-spacing:-.02em;color:var(--navy);line-height:1.1}
+.g{display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:5px;font-weight:700;font-size:12px;color:#fff}
+.gA{background:#0f7b3f}.gB{background:#4f9a3a}.gC{background:#9a8a1f}.gD{background:#c8642a}.gE{background:#b42828}
+.dl{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:var(--surface);text-decoration:none;font-weight:600;font-size:14px;padding:9px 14px;border-radius:8px;margin-top:8px}
+.th{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.th th,.th td{padding:6px 8px;border-bottom:1px solid var(--grid);text-align:right;white-space:nowrap}
+.th th:first-child,.th td:first-child{text-align:left}
+.th th{color:var(--muted);font-weight:500}
+@media (max-width:860px){.res{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="crumb"><a href="../../index.html">Jamal Kanbarieh · Portfolio</a> &nbsp;/&nbsp; <b>Bank Credit Scoring Model</b></div>
+  <button class="themebtn" id="themeBtn" type="button" aria-label="Toggle dark mode"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg> Theme</button>
+</div></header>
+
+<div class="wrap hero">
+  <a class="backbtn" href="../../index.html">← Back to portfolio</a>
+  <p class="eyebrow">Credit risk · Excel model</p>
+  <h1>Bank Counterparty Credit Scoring Model</h1>
+  <p class="lede">A CAMELS-style scorecard that turns a bank's financial statements into an internal credit grade and an indicative probability of default. It is the kind of model a financial-institutions desk uses to set interbank and trade-finance limits. Pick a bank, or edit any input and watch the rating respond.</p>
+  <ul class="tags"><li>Credit analysis</li><li>Counterparty rating</li><li>Probability of default</li><li>Excel modelling</li><li>Scenario testing</li></ul>
+  <a class="dl" href="Bank_Credit_Scoring_Model.xlsx" download>⬇ Download the Excel model (.xlsx)</a>
+  <div class="note info" role="note"><span aria-hidden="true">ⓘ</span><div><strong>Data &amp; calibration:</strong> inputs come from the banks' public Q4 2024 statements (SCFMS), in SYP millions. Thresholds, weights and the PD scale are the <strong>author's own illustrative calibration</strong>, not any institution's official methodology. Demonstration only, not a credit opinion.</div></div>
+</div>
+
+<div class="filters" role="region" aria-label="Controls"><div class="wrap">
+  <div class="fgroup"><label class="flabel" for="bankSel">Bank</label><select id="bankSel"></select></div>
+  <div class="fgroup"><label class="flabel" for="ceilSel">Sovereign ceiling</label><select id="ceilSel"></select></div>
+  <div class="fgroup"><span class="flabel">Stress test</span><div class="seg" id="stressSeg"><button type="button" data-v="0">None</button><button type="button" data-v="1">NPLs +50%</button><button type="button" data-v="2">Profit −50%</button><button type="button" data-v="3">Deposit run −20%</button></div></div>
+  <button class="reset" id="resetBtn" type="button">Reset inputs</button>
+</div></div>
+
+<main class="wrap">
+  <div class="res">
+    <div class="card kpi"><div class="k">Final rating</div><div class="big" id="rating">—</div><div class="s" id="ratingSub"></div></div>
+    <div class="card kpi"><div class="k">Weighted score</div><div class="v" id="score">—</div><div class="s">1 = strongest · 5 = weakest</div><div class="chart" id="gauge" style="margin-top:6px"></div></div>
+    <div class="card kpi"><div class="k">Indicative 1-year PD</div><div class="v" id="pd">—</div><div class="s" id="rankSub"></div></div>
+  </div>
+
+  <div class="grid32">
+    <div class="card panel">
+      <h2>Scorecard</h2>
+      <p class="sub">Each ratio graded A (1 point) to E (5 points) against its thresholds · hover a row for the cut-offs</p>
+      <div class="tablewrap"><table class="sc" id="sc"></table></div>
+    </div>
+    <div class="card panel">
+      <h2>Inputs (SYP millions)</h2>
+      <p class="sub">Blue = input. Edits are highlighted; the stress test applies on top.</p>
+      <div class="tablewrap"><table class="inp" id="inp"></table></div>
+    </div>
+  </div>
+
+  <div class="card panel full">
+    <h2>Peer ranking</h2>
+    <p class="sub">Every bank scored with the same model (published inputs, no stress) · click a bar to load that bank</p>
+    <div class="legend"><span><i class="sw" style="background:var(--actual)"></i>Selected bank</span><span><i class="sw" style="background:var(--budget)"></i>Peers</span></div>
+    <div class="chart" id="peer"></div>
+  </div>
+
+  <section class="about">
+    <div class="card panel">
+      <h2>Methodology</h2>
+      <p><b>Ratios &amp; weights:</b> Capital 20% (CAR; equity/RWA) · Asset quality 30% (NPL ratio; NPL ÷ (equity + ECL)) · Profitability 20% (net income/RWA; pre-provision profit/RWA, annualised) · Liquidity 20% (market-funding gap/assets; liquid assets/deposits) · Efficiency 10% (cost-to-income).</p>
+      <p><b>Grading:</b> each ratio scores 1 (A) to 5 (E) against four cut-offs. Ratios that are not meaningful (e.g. negative equity or negative income) score E. The weighted score maps to a 12-notch scale from AA to CCC, with an indicative PD. An optional sovereign ceiling caps the final rating.</p>
+      <p><b>Why asset quality carries the most weight:</b> Syrian banks' capital ratios are inflated by FX revaluation of their structural positions. Weighting capital less stops large capital buffers from masking very weak loan books.</p>
+      <div class="tablewrap"><table class="th" id="thr"></table></div>
+    </div>
+    <div class="card panel">
+      <h2>Model</h2>
+      <dl>
+        <dt>Excel workbook</dt><dd>6 sheets: Cover · Inputs · Scorecard · Peer Ranking · Assumptions · Peer Data · 390+ live formulas, no hard-coded results</dd>
+        <dt>Features</dt><dd>Bank selector · input overrides · editable thresholds &amp; weights · sovereign ceiling · peer ranking</dd>
+        <dt>Background</dt><dd>A public, independent version of the approach behind the counterparty Credit Rating Model I co-developed with the Risk Management Department at Al Baraka Bank Syria. Thresholds, weights, rating scale and data here are my own or public; no internal parameters are used.</dd>
+      </dl>
+      <a class="dl" href="Bank_Credit_Scoring_Model.xlsx" download>⬇ Download (.xlsx)</a>
+    </div>
+  </section>
+  <a class="backbtn bottom" href="../../index.html">← Back to all projects</a>
+</main>
+<footer><div class="wrap">Built by Jamal Kanbarieh. Public data; illustrative calibration; not a credit opinion.</div></footer>
+
+<script src="../../assets/common.js"></script>
+<script>
+const DATA = __DATA__;
+const ITEMS = ["Total assets", "Liquid assets", "Gross loans", "Non-performing loans", "ECL provisions", "Customer deposits", "Cash margins", "Total liabilities", "Total equity", "Regulatory capital", "Risk-weighted assets", "Operating income (adj.)", "Operating expenses", "Net income (adj.)"];
+const RAT = [
+  ["Capital adequacy ratio", "Capital", "H", [.20, .15, .125, .10], .10, v => v[10] > 0 ? v[9] / v[10] : null],
+  ["Equity / RWA", "Capital", "H", [.15, .12, .10, .08], .10, v => v[10] > 0 ? v[8] / v[10] : null],
+  ["NPL ratio", "Asset quality", "L", [.03, .06, .10, .20], .15, v => v[2] > 0 ? v[3] / v[2] : null],
+  ["NPL / (equity + ECL)", "Asset quality", "L", [.10, .25, .50, 1.0], .15, v => (v[8] + v[4]) > 0 ? v[3] / (v[8] + v[4]) : null],
+  ["Net income / RWA", "Profitability", "H", [.025, .015, .0075, 0], .10, v => v[10] > 0 ? v[13] / v[10] : null],
+  ["Pre-provision profit / RWA", "Profitability", "H", [.04, .025, .015, 0], .10, v => v[10] > 0 ? (v[11] - v[12]) / v[10] : null],
+  ["Market-funding gap / assets", "Liquidity", "L", [-.20, -.10, 0, .10], .10, v => v[0] > 0 ? (v[7] - v[5] - v[6] - v[1]) / v[0] : null],
+  ["Liquid assets / deposits", "Liquidity", "H", [.60, .45, .30, .20], .10, v => v[5] > 0 ? v[1] / v[5] : null],
+  ["Cost-to-income", "Efficiency", "L", [.45, .55, .65, .80], .10, v => v[11] > 0 ? v[12] / v[11] : null],
+];
+const SCALE = [[1.0, "AA", .0003], [1.4, "A", .0006], [1.8, "BBB+", .0010], [2.1, "BBB", .0017], [2.4, "BBB-", .0027], [2.7, "BB+", .0045], [3.0, "BB", .0075], [3.3, "BB-", .013], [3.6, "B+", .022], [3.9, "B", .038], [4.2, "B-", .065], [4.5, "CCC", .25]];
+const state = { bank: "BBSF", vals: null, stress: "0", ceil: "None" };
+
+function pts(r, x) { if (x == null || !isFinite(x)) return 5; const [a, b, c, d] = r[3]; if (r[2] === "H") return x >= a ? 1 : x >= b ? 2 : x >= c ? 3 : x >= d ? 4 : 5; return x <= a ? 1 : x <= b ? 2 : x <= c ? 3 : x <= d ? 4 : 5; }
+function stressed(v) { v = v.slice(); if (state.stress === "1") { v[3] *= 1.5; } if (state.stress === "2") { const cut = Math.abs(v[13]) * .5; v[13] -= cut; v[11] -= cut; } if (state.stress === "3") { const out = v[5] * .2; v[5] -= out; v[1] -= out; v[7] -= out; v[0] -= out; } return v; }
+function score(v) { const rows = RAT.map(r => { const x = r[5](v); const p = pts(r, x); return { r, x, p, w: r[4] }; }); const s = rows.reduce((t, o) => t + o.p * o.w, 0); let k = 0; SCALE.forEach((g, i) => { if (s >= g[0] - 1e-9) k = i; }); return { rows, s, k }; }
+function finalIdx(k) { if (state.ceil === "None") return k; const c = SCALE.findIndex(g => g[1] === state.ceil); return Math.max(k, c); }
+const bank = c => DATA.banks.find(b => b.c === c);
+const fmtR = (i, x) => x == null ? "n.m." : pctP(x, i === 4 || i === 5 ? 2 : 1);
+
+function build() {
+  const bs = $("bankSel"); DATA.banks.forEach(b => bs.appendChild(h("option", { value: b.c, text: `${b.n} (${b.c})` })));
+  bs.onchange = () => { state.bank = bs.value; state.vals = null; render(); };
+  const cs = $("ceilSel"); ["None", ...SCALE.map(g => g[1])].forEach(x => cs.appendChild(h("option", { value: x, text: x === "None" ? "None (Syria unrated)" : x })));
+  cs.onchange = () => { state.ceil = cs.value; render(); };
+  segBind("stressSeg", null, v => state.stress = v, render);
+  $("resetBtn").onclick = () => { state.vals = null; state.stress = "0"; state.ceil = "None"; render(); };
+  const t = $("thr"); t.appendChild(h("thead", {}, h("tr", {}, ...["Ratio", "Weight", "A", "B", "C", "D", "E"].map(x => h("th", { text: x })))));
+  const tb = h("tbody"); RAT.forEach((r, i) => { const s = r[2] === "H" ? "≥ " : "≤ "; tb.appendChild(h("tr", {}, h("td", { text: r[0] }), h("td", { text: pctP(r[4], 0) }), ...r[3].map(c => h("td", { text: s + pctP(c, i === 4 || i === 5 ? 2 : 0) })), h("td", { text: r[2] === "H" ? "< D" : "> D" }))); }); t.appendChild(tb);
+  initTheme(render);
+}
+function renderInputs() {
+  const b = bank(state.bank), t = $("inp"); t.replaceChildren();
+  ITEMS.forEach((lab, i) => {
+    const inp = h("input", { type: "number", step: "any", inputmode: "decimal", value: String(state.vals[i]), "aria-label": lab });
+    if (state.vals[i] !== b.v[i]) inp.classList.add("chg");
+    inp.addEventListener("change", () => { const v = parseFloat(inp.value); state.vals[i] = isFinite(v) ? v : b.v[i]; render(); });
+    t.appendChild(h("tr", {}, h("td", { text: lab }), h("td", {}, inp)));
+  });
+}
+function render() {
+  segSync("stressSeg", state.stress); $("bankSel").value = state.bank; $("ceilSel").value = state.ceil;
+  const b = bank(state.bank); if (!state.vals) state.vals = b.v.slice();
+  const R = score(stressed(state.vals)), fi = finalIdx(R.k), g = SCALE[fi];
+  $("rating").textContent = g[1];
+  $("ratingSub").textContent = `${b.n} · standalone ${SCALE[R.k][1]}${fi !== R.k ? " · capped by sovereign ceiling" : ""}${state.stress !== "0" ? " · stressed" : ""}`;
+  $("score").textContent = R.s.toFixed(2); $("pd").textContent = pctP(g[2], 2);
+  const peers = DATA.banks.map(x => ({ c: x.c, n: x.n, s: score(x.v).s })).sort((a, c) => a.s - c.s);
+  $("rankSub").textContent = `Peer rank on published data: ${peers.findIndex(p => p.c === b.c) + 1} of ${peers.length}`;
+  // gauge
+  const gb = $("gauge"); gb.replaceChildren(); const W = Math.max(200, gb.clientWidth), H = 34, sx = v => 4 + (W - 8) * (v - 1) / 4;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Score position" }, gb);
+  const cols = ["#0f7b3f", "#4f9a3a", "#9a8a1f", "#c8642a", "#b42828"]; for (let i = 0; i < 4; i++) el("rect", { x: sx(1 + i), y: 8, width: sx(2) - sx(1) - 2, height: 8, rx: 3, fill: cols[i + (i > 1 ? 1 : 0)], opacity: .8 }, svg);
+  el("path", { d: `M${sx(R.s)},20 l-6,9 h12 z`, fill: "var(--ink)" }, svg);
+  // scorecard
+  const t = $("sc"); t.replaceChildren(h("thead", {}, h("tr", {}, ...["Ratio", "Value", "Grade", "Weight"].map(x => h("th", { text: x })))));
+  const tb = h("tbody"); let cat;
+  R.rows.forEach((o, i) => {
+    if (o.r[1] !== cat) { cat = o.r[1]; const cp = R.rows.filter(x => x.r[1] === cat), avg = cp.reduce((s, x) => s + x.p * x.w, 0) / cp.reduce((s, x) => s + x.w, 0); tb.appendChild(h("tr", { class: "grp" }, h("td", { colspan: 3, text: cat }), h("td", { text: "avg " + avg.toFixed(1) }))); }
+    const L = "ABCDE"[o.p - 1], tr = h("tr", { tabindex: 0 }, h("td", { text: o.r[0] }), h("td", { text: fmtR(i, o.x) }), h("td", {}, h("span", { class: "g g" + L, text: L })), h("td", { class: "rank", text: pctP(o.w, 0) }));
+    bindTip(tr, () => [o.r[0], [{ label: "Value", value: fmtR(i, o.x) }, ...o.r[3].map((c, j) => ({ label: `${"ABCD"[j]} if ${o.r[2] === "H" ? "≥" : "≤"}`, value: fmtR(i, c) })), { label: "Points", value: `${o.p} × ${pctP(o.w, 0)} = ${(o.p * o.w).toFixed(2)}` }]]);
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+  renderInputs();
+  // peer chart
+  const pb = $("peer"); pb.replaceChildren(); const PW = Math.max(300, pb.clientWidth), narrow = PW < 560, lw = narrow ? 50 : 210, rowH = 26, PH = peers.length * rowH + 26;
+  const ps = el("svg", { viewBox: `0 0 ${PW} ${PH}`, role: "img", "aria-label": "Peer scores" }, pb); const px = v => lw + (PW - lw - 90) * (v - 1) / 4;
+  for (const t of [1, 2, 3, 4, 5]) { el("line", { x1: px(t), x2: px(t), y1: 0, y2: PH - 20, stroke: "var(--grid)" }, ps); txt(ps, px(t), PH - 6, String(t), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  peers.forEach((p, i) => {
+    const y = i * rowH + 4, sel = p.c === b.c, k = (() => { let k = 0; SCALE.forEach((g, j) => { if (p.s >= g[0] - 1e-9) k = j; }); return k; })();
+    const gg = el("g", { class: "hit", tabindex: 0, role: "button", "aria-label": `${p.n}: score ${p.s.toFixed(2)}, ${SCALE[k][1]}` }, ps);
+    el("rect", { x: 0, y: y - 4, width: PW, height: rowH, fill: sel ? "var(--accent)" : "transparent", opacity: sel ? .07 : 1 }, gg);
+    txt(gg, 0, y + 9, `${i + 1}. ${narrow ? p.c : p.n}`, { "dominant-baseline": "middle", fill: sel ? "var(--ink)" : "var(--ink-2)", "font-weight": sel ? 650 : 400 });
+    el("path", { d: rr(px(1), y, px(p.s) - px(1), 18, 3), fill: sel ? "var(--actual)" : "var(--budget)", class: "mk" }, gg);
+    txt(gg, PW, y + 9, `${p.s.toFixed(2)}  ${SCALE[k][1]}`, { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--ink)", "font-weight": sel ? 650 : 500 });
+    onActivate(gg, () => { state.bank = p.c; state.vals = null; render(); });
+  });
+}
+build(); render(); onResize(render);
+</script>
+</body>
+</html>

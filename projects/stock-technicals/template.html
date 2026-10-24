@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BBSF Stock Technicals</title>
+<meta name="description" content="Interactive technical analysis of Banque Bemo Saudi Fransi (DSE: BBSF), 2023–2025, by Jamal Kanbarieh: candlesticks, moving averages, RSI, volatility and drawdown.">
+<link rel="stylesheet" href="../../assets/site.css">
+<style>
+:root{--sma50:#eb6834;--sma200:#6250d6;--sma20:#1baf7a;--up:#0ca30c;--dn:#d03b3b}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){--sma50:#d95926;--sma200:#9085e9;--sma20:#199e70;--dn:#e66767}}
+:root[data-theme="dark"]{--sma50:#d95926;--sma200:#9085e9;--sma20:#199e70;--dn:#e66767}
+.toggles{display:flex;gap:6px;flex-wrap:wrap}
+.tg{border:1px solid var(--ring);background:var(--surface);color:var(--ink-2);border-radius:999px;font:inherit;font-size:12.5px;padding:3px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:28px}
+.tg[aria-pressed="false"]{opacity:.5}
+.tg i{width:14px;height:0;border-top:2px solid;display:inline-block}
+.rsiz{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="crumb"><a href="../../index.html">Jamal Kanbarieh · Portfolio</a> &nbsp;/&nbsp; <b>BBSF Stock Technicals</b></div>
+  <button class="themebtn" id="themeBtn" type="button" aria-label="Toggle dark mode"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg> Theme</button>
+</div></header>
+
+<div class="wrap hero">
+  <a class="backbtn" href="../../index.html">← Back to portfolio</a>
+  <p class="eyebrow">Investment analysis · Power BI · MBA coursework</p>
+  <h1>Financial Instruments RSI Tracker: Banque Bemo Saudi Fransi (BBSF)</h1>
+  <p class="lede">Technical analysis of a Damascus Securities Exchange bank stock from January 2023 to September 2025. It covers trend (20/50/200-day moving averages), momentum (RSI-14), volatility, drawdown and the distribution of daily returns. Pick a date range, toggle indicators, and hover for any day's prices.</p>
+  <ul class="tags"><li>Technical indicators</li><li>Time-series DAX</li><li>Risk metrics</li><li>Custom visuals (candlestick)</li><li>Power Query (Arabic source data)</li></ul>
+  <div class="note" role="note"><span aria-hidden="true">⚑</span><div><strong>Data notes:</strong> public DSE daily prices in SYP, not adjusted for corporate actions. The DSE was <strong>closed from 8 Dec 2024 to 2 Jun 2025</strong> (shaded on the chart). Two one-day moves beyond the exchange's ±5% limit (8 Feb 2023: −26%; 3 Apr 2024: −21%) coincide with capital increases, most likely bonus-share adjustments. They are marked ◆ and excluded from return, volatility and drawdown statistics. DSE closing prices are reference prices and can sit outside the day's traded high–low range.</div></div>
+</div>
+
+<div class="filters" role="region" aria-label="Filters"><div class="wrap">
+  <div class="fgroup"><span class="flabel">Range</span><div class="seg" id="rangeSeg"><button type="button" data-v="2023">2023</button><button type="button" data-v="2024">2024</button><button type="button" data-v="2025">2025</button><button type="button" data-v="all">All</button></div></div>
+  <div class="fgroup"><span class="flabel">Chart</span><div class="seg" id="typeSeg"><button type="button" data-v="candle">Candles</button><button type="button" data-v="line">Line</button></div></div>
+  <div class="fgroup"><span class="flabel">Overlays</span><div class="toggles" id="ovl"></div></div>
+</div></div>
+
+<main class="wrap">
+  <div class="kpis" id="kpis"></div>
+  <div class="card insights"><h2 id="insTitle">Key findings</h2><ul id="ins"></ul></div>
+
+  <div class="card panel full">
+    <h2>Price &amp; trend</h2>
+    <p class="sub" id="pxSub"></p>
+    <div class="chart" id="px"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card panel">
+      <h2>Momentum: RSI (14)</h2>
+      <p class="sub">Above 70 = overbought (pull-back risk) · below 30 = oversold (bounce potential) · Wilder smoothing</p>
+      <div class="chart" id="rsi"></div>
+      <p class="rsiz" id="rsiStats"></p>
+    </div>
+    <div class="card panel">
+      <h2>Distribution of daily returns</h2>
+      <p class="sub" id="histSub"></p>
+      <div class="chart" id="hist"></div>
+    </div>
+  </div>
+
+  <div class="card panel full">
+    <h2>Drawdown from peak</h2>
+    <p class="sub">How far the price sits below its running high in the selected range (corporate-action days neutralised)</p>
+    <div class="chart" id="dd"></div>
+  </div>
+
+  <section class="about">
+    <div class="card panel">
+      <h2>About this analysis</h2>
+      <p><b>Question:</b> What do trend, momentum and risk indicators say about BBSF's price behaviour through Syria's 2023–2025 currency collapse, exchange closure and reopening?</p>
+      <p><b>Approach:</b> Daily prices were imported from the exchange's Arabic-language export, with headers translated and types fixed in Power Query. Indicators were built as DAX calculated columns: previous close, daily and log returns, 30-day volatility, 20/50/200-day SMAs, and gains, losses and RSI-14 with an overbought/neutral/oversold status. A candlestick custom visual shows price action.</p>
+      <p><b>What this view adds:</b> Wilder-smoothed RSI (the industry standard), drawdown analysis, a return histogram with fat-tail statistics, golden/death-cross detection, and handling of the exchange closure and corporate-action gaps.</p>
+    </div>
+    <div class="card panel">
+      <h2>Model</h2>
+      <dl>
+        <dt>Tools</dt><dd>Power BI · Power Query · DAX · Candlestick custom visual</dd>
+        <dt>Data</dt><dd>534 trading days · Jan 2023 – Sep 2025</dd>
+        <dt>Indicators</dt><dd>SMA 20/50/200 · RSI-14 · log returns · 30-day volatility · drawdown</dd>
+        <dt>Disclaimer</dt><dd>For analytical demonstration only; not investment advice.</dd>
+      </dl>
+    </div>
+  </section>
+  <a class="backbtn bottom" href="../../index.html">← Back to all projects</a>
+</main>
+<footer><div class="wrap">Interactive web version of a Power BI report, built by Jamal Kanbarieh from public exchange data.</div></footer>
+
+<script src="../../assets/common.js"></script>
+<script>
+const RAW = __DATA__; // [date, open, high, low, close, volume]
+const CA = new Set(["2023-02-08", "2024-04-03"]); // corporate-action adjustment days
+const CLOSE_FROM = "2024-12-05", CLOSE_TO = "2025-06-02";
+const P = RAW.map((r, i) => ({ i, d: r[0], t: Date.parse(r[0]), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5] }));
+// indicators on the full series
+function sma(n) { let s = 0; return P.map((p, i) => { s += p.c; if (i >= n) s -= P[i - n].c; return i >= n - 1 ? s / n : null; }); }
+const S20 = sma(20), S50 = sma(50), S200 = sma(200);
+P.forEach((p, i) => { p.r = i && !CA.has(p.d) ? Math.log(p.c / P[i - 1].c) : null; p.ca = CA.has(p.d); });
+(function rsi() { let ag = 0, al = 0; for (let i = 1; i < P.length; i++) { const ch = P[i].ca ? 0 : P[i].c - P[i - 1].c, g = Math.max(ch, 0), l = Math.max(-ch, 0); if (i <= 14) { ag += g / 14; al += l / 14; if (i === 14) P[i].rsi = al === 0 ? 100 : 100 - 100 / (1 + ag / al); } else { ag = (ag * 13 + g) / 14; al = (al * 13 + l) / 14; P[i].rsi = al === 0 ? 100 : 100 - 100 / (1 + ag / al); } } })();
+P.forEach((p, i) => { p.s20 = S20[i]; p.s50 = S50[i]; p.s200 = S200[i]; });
+const CROSS = []; for (let i = 1; i < P.length; i++) { const a = P[i - 1], b = P[i]; if (a.s50 && a.s200 && b.s50 && b.s200) { if (a.s50 <= a.s200 && b.s50 > b.s200) CROSS.push({ p: b, k: "Golden cross" }); if (a.s50 >= a.s200 && b.s50 < b.s200) CROSS.push({ p: b, k: "Death cross" }); } }
+
+const state = { range: "all", type: "line", ov: { s20: false, s50: true, s200: true, vol: true } };
+const OVL = [["s20", "SMA 20", "--sma20"], ["s50", "SMA 50", "--sma50"], ["s200", "SMA 200", "--sma200"], ["vol", "Volume", "--budget"]];
+const view = () => state.range === "all" ? P : P.filter(p => p.d.startsWith(state.range));
+const fmtP = v => v == null ? "—" : v.toLocaleString("en-US", { maximumFractionDigits: 2 });
+const fdate = d => new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+function stats(V) {
+  const r = V.slice(1).map(p => p.r).filter(x => x != null);
+  const mean = r.reduce((a, b) => a + b, 0) / r.length, sd = Math.sqrt(r.reduce((a, b) => a + (b - mean) ** 2, 0) / r.length);
+  const skew = r.reduce((a, b) => a + ((b - mean) / sd) ** 3, 0) / r.length, kurt = r.reduce((a, b) => a + ((b - mean) / sd) ** 4, 0) / r.length - 3;
+  // total return chaining log returns (neutralises corporate actions)
+  const tot = Math.exp(r.reduce((a, b) => a + b, 0)) - 1;
+  let peak = -Infinity, idx = 1, mdd = 0, mddAt = null; const dd = [];
+  V.forEach((p, i) => { if (i) idx *= p.r != null ? Math.exp(p.r) : 1; if (idx > peak) peak = idx; const d = idx / peak - 1; dd.push({ p, d }); if (d < mdd) { mdd = d; mddAt = p; } });
+  const hi = V.reduce((a, b) => b.c > a.c ? b : a), lo = V.reduce((a, b) => b.c < a.c ? b : a);
+  const up = r.filter(x => x > 0).length, limitDays = r.filter(x => Math.abs(x) >= Math.log(1.0495)).length;
+  return { r, mean, sd, ann: sd * Math.sqrt(250), skew, kurt, tot, mdd, mddAt, dd, hi, lo, up, limitDays };
+}
+
+function kpis(V, S) {
+  const last = V[V.length - 1], first = V[0];
+  const items = [
+    { k: "Last close", v: "SYP " + fmtP(last.c), s: fdate(last.d) },
+    { k: "Total return", v: pctS(S.tot), s: `${fdate(first.d)} → ${fdate(last.d)}`, c: S.tot >= 0 ? "up" : "down" },
+    { k: "Volatility (ann.)", v: pctP(S.ann, 0), s: `daily σ ${pctP(S.sd, 2)} · ${S.r.length} returns` },
+    { k: "Max drawdown", v: pctP(S.mdd, 0), s: S.mddAt ? "trough " + fdate(S.mddAt.d) : "", c: "down" },
+  ];
+  $("kpis").replaceChildren(...items.map(it => h("div", { class: "card kpi" }, h("div", { class: "k", text: it.k }), h("div", { class: "v", text: it.v }), h("div", { class: "s" + (it.c ? " " + it.c : ""), text: it.s }))));
+}
+function insights(V, S) {
+  const ul = $("ins"); ul.replaceChildren();
+  const add = (...parts) => ul.appendChild(h("li", {}, ...parts.map(x => typeof x === "string" ? document.createTextNode(x) : h("b", { text: x.b }))));
+  $("insTitle").textContent = `Key findings · ${state.range === "all" ? "Jan 2023 – Sep 2025" : state.range}`;
+  add("Price ranged from ", { b: "SYP " + fmtP(S.lo.c) }, ` (${fdate(S.lo.d)}) to `, { b: "SYP " + fmtP(S.hi.c) }, ` (${fdate(S.hi.d)}). Total return adjusted for corporate actions was `, { b: pctS(S.tot) }, ".");
+  add("Risk is high: annualised volatility of ", { b: pctP(S.ann, 0) }, " and a maximum drawdown of ", { b: pctP(S.mdd, 0) }, `. ${S.limitDays} sessions hit the ±5% daily price limit, so true volatility is understated.`);
+  add(S.kurt > 3 ? "Returns are strongly fat-tailed: " : S.kurt > .5 ? "Returns are moderately fat-tailed: " : "Return tails are close to normal: ", { b: `excess kurtosis ${S.kurt.toFixed(1)}` }, `, skew ${S.skew.toFixed(2).replace("-", "−")}. Only ${pctP(S.up / S.r.length, 0)} of sessions closed higher; many days show no trades and an unchanged reference price.`);
+  const cr = CROSS.filter(x => V.includes(x.p));
+  if (cr.length) add("Trend signals: ", ...cr.flatMap((x, i) => [i ? "; " : "", { b: x.k }, ` on ${fdate(x.p.d)}`]), " (50-day vs 200-day SMA).");
+  const last = V[V.length - 1];
+  if (last.rsi != null) add("Latest RSI-14 is ", { b: last.rsi.toFixed(0) }, last.rsi > 70 ? ": overbought." : last.rsi < 30 ? ": oversold." : ": neutral momentum.");
+}
+
+function xScale(V, left, right, W) { // trading-day index scale (no weekend gaps), closure shown as a band
+  const i0 = V[0].i, i1 = V[V.length - 1].i;
+  return i => left + (W - left - right) * (i - i0) / Math.max(1, i1 - i0);
+}
+function monthTicks(V, maxN) { const out = []; let last = ""; V.forEach(p => { const m = p.d.slice(0, 7); if (m !== last) { out.push(p); last = m; } }); const step = Math.ceil(out.length / maxN); return out.filter((_, i) => i % step === 0); }
+const mLbl = d => new Date(d + "T00:00:00").toLocaleDateString("en-GB", { month: "short" }) + " '" + d.slice(2, 4);
+
+function renderPrice(V) {
+  const box = $("px"); box.replaceChildren();
+  const W = Math.max(300, box.clientWidth), narrow = W < 560, left = narrow ? 48 : 64, right = narrow ? 8 : 16, top = 10, H1 = narrow ? 240 : 330, gap = 8, H2 = state.ov.vol ? (narrow ? 60 : 80) : 0, bottom = 26, H = top + H1 + (H2 ? gap + H2 : 0) + bottom;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "BBSF price chart" }, box);
+  const sx = xScale(V, left, right, W);
+  const vals = V.flatMap(p => [p.c, ...(state.type === "candle" ? [p.h, p.l] : []), state.ov.s50 ? p.s50 : null, state.ov.s200 ? p.s200 : null, state.ov.s20 ? p.s20 : null]).filter(x => x != null);
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  const ticks = niceTicks(lo * .97, hi * 1.02, 4), y0 = ticks[0], y1 = ticks[ticks.length - 1], sy = v => top + H1 * (1 - (v - y0) / (y1 - y0));
+  for (const t of ticks) { el("line", { x1: left, x2: W - right, y1: sy(t), y2: sy(t), stroke: "var(--grid)" }, svg); txt(svg, left - 8, sy(t), t.toLocaleString("en-US"), { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  for (const p of monthTicks(V, narrow ? 4 : 9)) txt(svg, sx(p.i), H - 8, mLbl(p.d), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 });
+  // closure band
+  const a = V.find(p => p.d === CLOSE_FROM), b = V.find(p => p.d === CLOSE_TO);
+  if (a && b) { el("rect", { x: sx(a.i), y: top, width: Math.max(6, sx(b.i) - sx(a.i)), height: H1 + (H2 ? gap + H2 : 0), fill: "var(--ink-2)", opacity: .1 }, svg); txt(svg, sx(a.i) + 4, top + 12, "DSE closed Dec '24 – Jun '25", { "font-size": 11, fill: "var(--ink-2)" }); }
+  const cw = Math.max(1, Math.min(7, (W - left - right) / V.length * .7));
+  if (state.type === "candle") {
+    V.forEach(p => { const up = p.c >= p.o, col = up ? "var(--up)" : "var(--dn)", x = sx(p.i); el("line", { x1: x, x2: x, y1: sy(Math.max(p.h, p.c)), y2: sy(Math.min(p.l, p.c)), stroke: col, "stroke-width": 1 }, svg); const yy = sy(Math.max(p.o, p.c)); el("rect", { x: x - cw / 2, y: yy, width: cw, height: Math.max(1, sy(Math.min(p.o, p.c)) - yy), fill: col }, svg); });
+  } else {
+    const d = V.map((p, k) => `${k ? "L" : "M"}${sx(p.i)},${sy(p.c)}`).join("");
+    el("path", { d: d + `L${sx(V[V.length - 1].i)},${top + H1}L${sx(V[0].i)},${top + H1}Z`, fill: "var(--actual)", opacity: .07 }, svg);
+    el("path", { d, fill: "none", stroke: "var(--actual)", "stroke-width": 1.75 }, svg);
+  }
+  for (const [k, , c] of OVL.slice(0, 3)) if (state.ov[k]) { let d = "", pen = false; V.forEach(p => { if (p[k] == null) { pen = false; return; } d += (pen ? "L" : "M") + sx(p.i) + "," + sy(p[k]); pen = true; }); el("path", { d, fill: "none", stroke: `var(${c})`, "stroke-width": 1.75 }, svg); }
+  CROSS.filter(x => V.includes(x.p)).forEach(x => { const cx = sx(x.p.i), cy = sy(x.p.s50); el("circle", { cx, cy, r: 5, fill: "var(--surface)", stroke: x.k[0] === "G" ? "var(--up)" : "var(--dn)", "stroke-width": 2 }, svg); if (!narrow) txt(svg, cx, cy + (x.k[0] === "G" ? 18 : -10), x.k, { "text-anchor": "middle", "font-size": 11, fill: "var(--ink-2)" }); });
+  V.filter(p => p.ca).forEach(p => { const cx = sx(p.i), cy = sy(p.c); el("path", { d: `M${cx},${cy - 7}l5,5l-5,5l-5,-5z`, fill: "var(--ink)" }, svg); });
+  if (H2) {
+    const vt = top + H1 + gap, vmax = Math.max(...V.map(p => p.v)), vcap = (() => { const s = V.map(p => p.v).sort((a, b) => a - b); return Math.max(1, s[Math.floor(s.length * .98)]); })();
+    V.forEach(p => { const hh = H2 * Math.min(1, p.v / vcap); el("rect", { x: sx(p.i) - cw / 2, y: vt + H2 - hh, width: cw, height: hh, fill: "var(--budget)" }, svg); });
+    txt(svg, left - 8, vt + 6, "Vol", { "text-anchor": "end", fill: "var(--muted)", "font-size": 11 });
+  }
+  const cross = el("line", { y1: top, y2: top + H1 + (H2 ? gap + H2 : 0), stroke: "var(--ink-2)", opacity: 0 }, svg);
+  const hit = el("rect", { x: left, y: top, width: W - left - right, height: H1 + (H2 ? gap + H2 : 0), fill: "transparent", style: "cursor:crosshair" }, svg);
+  const mv = e => { const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width; let best = V[0]; for (const p of V) if (Math.abs(sx(p.i) - px) < Math.abs(sx(best.i) - px)) best = p; cross.setAttribute("x1", sx(best.i)); cross.setAttribute("x2", sx(best.i)); cross.setAttribute("opacity", .4);
+    const ret = best.i ? best.c / P[best.i - 1].c - 1 : null;
+    showTip(e, fdate(best.d) + (best.ca ? " · corporate-action adjustment" : ""), [{ label: "Close", value: fmtP(best.c) }, { label: "Open / High / Low", value: `${fmtP(best.o)} / ${fmtP(best.h)} / ${fmtP(best.l)}` }, { label: "Change", value: ret == null ? "—" : pctS(ret, 2), cls: ret >= 0 ? "up" : "down" }, { label: "Volume", value: best.v.toLocaleString("en-US") }, ...(state.ov.s50 ? [{ label: "SMA 50", value: fmtP(best.s50), color: css("--sma50") }] : []), ...(state.ov.s200 ? [{ label: "SMA 200", value: fmtP(best.s200), color: css("--sma200") }] : []), { label: "RSI 14", value: best.rsi == null ? "—" : best.rsi.toFixed(0) }]); };
+  hit.addEventListener("pointermove", mv); hit.addEventListener("pointerdown", mv); hit.addEventListener("pointerleave", () => { hideTip(); cross.setAttribute("opacity", 0); });
+  $("pxSub").textContent = `${V.length} trading days · SYP · x-axis in trading days (weekends and holidays removed) · ◆ = corporate-action adjustment · ○ = 50/200-day crossover · volume capped at the 98th percentile for readability`;
+}
+
+function renderRSI(V) {
+  const box = $("rsi"); box.replaceChildren();
+  const W = Math.max(280, box.clientWidth), left = 36, right = 8, top = 8, bottom = 24, H = 210;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "RSI 14" }, box);
+  const sx = xScale(V, left, right, W), sy = v => top + (H - top - bottom) * (1 - v / 100);
+  el("rect", { x: left, y: sy(100), width: W - left - right, height: sy(70) - sy(100), fill: "var(--dn)", opacity: .07 }, svg);
+  el("rect", { x: left, y: sy(30), width: W - left - right, height: sy(0) - sy(30), fill: "var(--up)", opacity: .07 }, svg);
+  for (const t of [0, 30, 50, 70, 100]) { el("line", { x1: left, x2: W - right, y1: sy(t), y2: sy(t), stroke: t === 30 || t === 70 ? "var(--axis)" : "var(--grid)", "stroke-dasharray": t === 30 || t === 70 ? "4 3" : "" }, svg); txt(svg, left - 6, sy(t), String(t), { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  for (const p of monthTicks(V, W < 500 ? 3 : 5)) txt(svg, sx(p.i), H - 6, mLbl(p.d), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 });
+  let d = "", pen = false; V.forEach(p => { if (p.rsi == null) { pen = false; return; } d += (pen ? "L" : "M") + sx(p.i) + "," + sy(p.rsi); pen = true; });
+  el("path", { d, fill: "none", stroke: "var(--actual)", "stroke-width": 1.5 }, svg);
+  const cross = el("line", { y1: top, y2: H - bottom, stroke: "var(--ink-2)", opacity: 0 }, svg);
+  const hit = el("rect", { x: left, y: top, width: W - left - right, height: H - top - bottom, fill: "transparent", style: "cursor:crosshair" }, svg);
+  const mv = e => { const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width; let b = V[0]; for (const p of V) if (Math.abs(sx(p.i) - px) < Math.abs(sx(b.i) - px)) b = p; cross.setAttribute("x1", sx(b.i)); cross.setAttribute("x2", sx(b.i)); cross.setAttribute("opacity", .4); showTip(e, fdate(b.d), [{ label: "RSI 14", value: b.rsi == null ? "—" : b.rsi.toFixed(1) }, { label: "Status", value: b.rsi == null ? "—" : b.rsi > 70 ? "Overbought" : b.rsi < 30 ? "Oversold" : "Neutral" }, { label: "Close", value: fmtP(b.c) }]); };
+  hit.addEventListener("pointermove", mv); hit.addEventListener("pointerleave", () => { hideTip(); cross.setAttribute("opacity", 0); });
+  const rs = V.filter(p => p.rsi != null), ob = rs.filter(p => p.rsi > 70).length, os = rs.filter(p => p.rsi < 30).length;
+  $("rsiStats").textContent = `Overbought ${pctP(ob / rs.length, 0)} of days · oversold ${pctP(os / rs.length, 0)} · neutral ${pctP(1 - (ob + os) / rs.length, 0)}`;
+}
+
+function renderHist(V, S) {
+  const box = $("hist"); box.replaceChildren();
+  const W = Math.max(280, box.clientWidth), left = 36, right = 8, top = 16, bottom = 30, H = 210;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Histogram of daily returns" }, box);
+  const r = S.r.map(x => Math.exp(x) - 1), B = []; for (let b = -0.05; b < 0.0501; b += 0.01) B.push({ a: b - .005, z: b + .005, mid: b, n: 0 });
+  r.forEach(x => { const k = Math.max(0, Math.min(B.length - 1, Math.round((x + .05) / .01))); B[k].n++; });
+  const max = Math.max(...B.map(b => b.n)), slot = (W - left - right) / B.length, sy = v => top + (H - top - bottom) * (1 - v / max);
+  for (const t of niceTicks(0, max, 3)) { if (t > max) continue; el("line", { x1: left, x2: W - right, y1: sy(t), y2: sy(t), stroke: t ? "var(--grid)" : "var(--axis)" }, svg); txt(svg, left - 6, sy(t), String(t), { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  B.forEach((b, i) => {
+    const x = left + i * slot + 1, w = slot - 2, col = Math.abs(b.mid) < .001 ? "var(--budget)" : b.mid > 0 ? "var(--up)" : "var(--dn)";
+    const g = el("g", { class: "hit", tabindex: 0, "aria-label": `${(b.mid * 100).toFixed(0)}%: ${b.n} days` }, svg);
+    el("rect", { x: x - 1, y: top, width: slot, height: H - top - bottom, fill: "transparent" }, g);
+    el("path", { d: rt(x, sy(b.n), w, sy(0) - sy(b.n), 3), fill: col, opacity: .85, class: "mk" }, g);
+    if (i % 2 === 0 || W > 480) txt(g, x + w / 2, H - 12, (b.mid > 0 ? "+" : "") + (b.mid * 100).toFixed(0) + "%", { "text-anchor": "middle", fill: "var(--muted)", "font-size": 10.5 });
+    bindTip(g, () => [`Daily change ≈ ${(b.mid > 0 ? "+" : "") + (b.mid * 100).toFixed(0)}%`, [{ label: "Days", value: String(b.n) }, { label: "Share of days", value: pctP(b.n / r.length, 1) }]]);
+  });
+  $("histSub").textContent = `${r.length} daily returns, 1-point buckets · mean ${pctS(Math.exp(S.mean) - 1, 2)} · σ ${pctP(S.sd, 2)} · ±5% buckets = limit-hit days`;
+}
+
+function renderDD(V, S) {
+  const box = $("dd"); box.replaceChildren();
+  const W = Math.max(300, box.clientWidth), left = W < 560 ? 48 : 64, right = W < 560 ? 8 : 16, top = 8, bottom = 24, H = 170;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Drawdown" }, box);
+  const sx = xScale(V, left, right, W), lo = Math.min(-.05, S.mdd), ticks = niceTicks(lo, 0, 3), sy = v => top + (H - top - bottom) * (v / ticks[0]);
+  for (const t of ticks) { el("line", { x1: left, x2: W - right, y1: sy(t), y2: sy(t), stroke: t ? "var(--grid)" : "var(--axis)" }, svg); txt(svg, left - 8, sy(t), (t * 100).toFixed(0) + "%", { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  for (const p of monthTicks(V, W < 560 ? 4 : 9)) txt(svg, sx(p.i), H - 6, mLbl(p.d), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 });
+  const d = S.dd.map((o, k) => `${k ? "L" : "M"}${sx(o.p.i)},${sy(o.d)}`).join("");
+  el("path", { d: d + `L${sx(V[V.length - 1].i)},${sy(0)}L${sx(V[0].i)},${sy(0)}Z`, fill: "var(--dn)", opacity: .15 }, svg);
+  el("path", { d, fill: "none", stroke: "var(--dn)", "stroke-width": 1.5 }, svg);
+  if (S.mddAt) { const cx = sx(S.mddAt.i), cy = sy(S.mdd); el("circle", { cx, cy, r: 4, fill: "var(--dn)", stroke: "var(--surface)", "stroke-width": 2 }, svg); txt(svg, cx + (cx > W * .7 ? -8 : 8), cy - 6, `Max drawdown ${pctP(S.mdd, 0)}`, { "text-anchor": cx > W * .7 ? "end" : "start", "font-size": 11.5, fill: "var(--ink)", "font-weight": 600 }); }
+  const cross = el("line", { y1: top, y2: H - bottom, stroke: "var(--ink-2)", opacity: 0 }, svg);
+  const hit = el("rect", { x: left, y: top, width: W - left - right, height: H - top - bottom, fill: "transparent", style: "cursor:crosshair" }, svg);
+  const mv = e => { const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width; let b = S.dd[0]; for (const o of S.dd) if (Math.abs(sx(o.p.i) - px) < Math.abs(sx(b.p.i) - px)) b = o; cross.setAttribute("x1", sx(b.p.i)); cross.setAttribute("x2", sx(b.p.i)); cross.setAttribute("opacity", .4); showTip(e, fdate(b.p.d), [{ label: "Drawdown", value: pctP(b.d, 1), cls: "down" }, { label: "Close", value: fmtP(b.p.c) }]); };
+  hit.addEventListener("pointermove", mv); hit.addEventListener("pointerleave", () => { hideTip(); cross.setAttribute("opacity", 0); });
+}
+
+function build() {
+  const o = $("ovl");
+  for (const [k, l, c] of OVL) { const b = h("button", { type: "button", class: "tg", "aria-pressed": String(state.ov[k]) }, (() => { const i = h("i"); i.style.borderColor = `var(${c})`; if (k === "vol") { i.style.borderTopWidth = "8px"; i.style.width = "8px"; } return i; })(), document.createTextNode(l)); b.onclick = () => { state.ov[k] = !state.ov[k]; b.setAttribute("aria-pressed", String(state.ov[k])); render(); }; o.appendChild(b); }
+  segBind("rangeSeg", null, v => state.range = v, render); segBind("typeSeg", null, v => state.type = v, render);
+  initTheme(render);
+}
+function render() { segSync("rangeSeg", state.range); segSync("typeSeg", state.type); const V = view(), S = stats(V); kpis(V, S); insights(V, S); renderPrice(V); renderRSI(V); renderHist(V, S); renderDD(V, S); }
+build(); render(); onResize(render);
+</script>
+</body>
+</html>
