@@ -27,7 +27,7 @@
   <a class="backbtn" href="../../index.html">← Back to portfolio</a>
   <p class="eyebrow">Investment analysis · Power BI · MBA coursework</p>
   <h1>Financial Instruments RSI Tracker: Banque Bemo Saudi Fransi (BBSF)</h1>
-  <p class="lede">Technical analysis of a Damascus Securities Exchange bank stock from January 2023 to September 2025. It covers trend (20/50/200-day moving averages), momentum (RSI-14), volatility, drawdown and the distribution of daily returns. Pick a date range, toggle indicators, and hover for any day's prices.</p>
+  <p class="lede">Technical and risk analysis of a Damascus Securities Exchange bank stock from January 2023 to September 2025, a period that includes a currency collapse, a six-month exchange closure and a reopening. It covers trend (20/50/200-day moving averages), momentum (RSI-14), rolling volatility, drawdown and the distribution of daily returns, and it is explicit about where a thin, price-limited market makes those indicators less reliable. Pick a date range, toggle indicators, and hover for any day's prices.</p>
   <ul class="tags"><li>Technical indicators</li><li>Time-series DAX</li><li>Risk metrics</li><li>Custom visuals (candlestick)</li><li>Power Query (Arabic source data)</li></ul>
   <div class="note" role="note"><span aria-hidden="true">⚑</span><div><strong>Data notes:</strong> public DSE daily prices in SYP, not adjusted for corporate actions. The DSE was <strong>closed from 8 Dec 2024 to 2 Jun 2025</strong> (shaded on the chart). Two one-day moves beyond the exchange's ±5% limit (8 Feb 2023: −26%; 3 Apr 2024: −21%) coincide with capital increases, most likely bonus-share adjustments. They are marked ◆ and excluded from return, volatility and drawdown statistics. DSE closing prices are reference prices and can sit outside the day's traded high–low range.</div></div>
 </div>
@@ -63,9 +63,33 @@
   </div>
 
   <div class="card panel full">
+    <h2>Rolling 30-day volatility (annualised)</h2>
+    <p class="sub" id="volSub"></p>
+    <div class="legend"><span><i class="ln" style="border-color:var(--sma200)"></i>30-day volatility</span><span><i class="ln dash" style="border-color:var(--ink-2)"></i>Average for the selected range</span></div>
+    <div class="chart" id="vol"></div>
+    <div class="read" id="volRead"></div>
+  </div>
+
+  <div class="card panel full">
     <h2>Drawdown from peak</h2>
     <p class="sub">How far the price sits below its running high in the selected range (corporate-action days neutralised)</p>
     <div class="chart" id="dd"></div>
+  </div>
+
+  <h2 class="sechead">How the analysis works</h2>
+  <div class="story">
+    <div class="card"><h3>Business problem</h3><p>An investment desk considering a listed bank stock needs more than a price chart: is the trend intact, is momentum stretched, how much can the position lose from a peak, and how much of the apparent stability is real? On an exchange with a ±5% daily limit and many no-trade days, standard indicators need careful handling before they inform a decision.</p></div>
+    <div class="card"><h3>Calculations and assumptions</h3><ul>
+      <li><b>SMA n</b> = average close over the last <i>n</i> sessions; a 50/200 crossover marks a change of trend.</li>
+      <li><b>RSI-14</b> = 100 − 100 ÷ (1 + average gain ÷ average loss), Wilder-smoothed.</li>
+      <li><b>Returns</b> are log returns; <b>volatility</b> = standard deviation × √250.</li>
+      <li><b>Drawdown</b> = price ÷ running peak − 1.</li>
+      <li>The two capital-increase days are treated as price adjustments and excluded from returns, volatility and drawdown.</li></ul></div>
+    <div class="card"><h3>Reading the results</h3><ul>
+      <li>Limit-hit days cap each day's move, so measured volatility <b>understates</b> true risk and trends persist longer than in a free market.</li>
+      <li>RSI extremes last longer for the same reason, so they are weaker reversal signals here.</li>
+      <li>Drawdown and the fat-tailed return distribution are the figures that matter for position sizing.</li>
+      <li>Thin volume means exit prices may differ from the reference close.</li></ul></div>
   </div>
 
   <section class="about">
@@ -73,14 +97,14 @@
       <h2>About this analysis</h2>
       <p><b>Question:</b> What do trend, momentum and risk indicators say about BBSF's price behaviour through Syria's 2023–2025 currency collapse, exchange closure and reopening?</p>
       <p><b>Approach:</b> Daily prices were imported from the exchange's Arabic-language export, with headers translated and types fixed in Power Query. Indicators were built as DAX calculated columns: previous close, daily and log returns, 30-day volatility, 20/50/200-day SMAs, and gains, losses and RSI-14 with an overbought/neutral/oversold status. A candlestick custom visual shows price action.</p>
-      <p><b>What this view adds:</b> Wilder-smoothed RSI (the industry standard), drawdown analysis, a return histogram with fat-tail statistics, golden/death-cross detection, and handling of the exchange closure and corporate-action gaps.</p>
+      <p><b>What this view adds:</b> Wilder-smoothed RSI (the industry standard), a rolling-volatility chart, drawdown analysis, a return histogram with fat-tail statistics, golden/death-cross detection, and handling of the exchange closure and corporate-action gaps.</p>
     </div>
     <div class="card panel">
       <h2>Model</h2>
       <dl>
         <dt>Tools</dt><dd>Power BI · Power Query · DAX · Candlestick custom visual</dd>
         <dt>Data</dt><dd>534 trading days · Jan 2023 – Sep 2025</dd>
-        <dt>Indicators</dt><dd>SMA 20/50/200 · RSI-14 · log returns · 30-day volatility · drawdown</dd>
+        <dt>Indicators</dt><dd>SMA 20/50/200 · RSI-14 · log returns · rolling 30-day volatility · drawdown</dd>
         <dt>Disclaimer</dt><dd>For analytical demonstration only; not investment advice.</dd>
       </dl>
     </div>
@@ -101,6 +125,7 @@ const S20 = sma(20), S50 = sma(50), S200 = sma(200);
 P.forEach((p, i) => { p.r = i && !CA.has(p.d) ? Math.log(p.c / P[i - 1].c) : null; p.ca = CA.has(p.d); });
 (function rsi() { let ag = 0, al = 0; for (let i = 1; i < P.length; i++) { const ch = P[i].ca ? 0 : P[i].c - P[i - 1].c, g = Math.max(ch, 0), l = Math.max(-ch, 0); if (i <= 14) { ag += g / 14; al += l / 14; if (i === 14) P[i].rsi = al === 0 ? 100 : 100 - 100 / (1 + ag / al); } else { ag = (ag * 13 + g) / 14; al = (al * 13 + l) / 14; P[i].rsi = al === 0 ? 100 : 100 - 100 / (1 + ag / al); } } })();
 P.forEach((p, i) => { p.s20 = S20[i]; p.s50 = S50[i]; p.s200 = S200[i]; });
+P.forEach((p, i) => { const w = P.slice(Math.max(1, i - 29), i + 1).map(q => q.r).filter(x => x != null); if (i >= 30 && w.length >= 20) { const m = w.reduce((a, b) => a + b, 0) / w.length; p.vol = Math.sqrt(w.reduce((a, b) => a + (b - m) ** 2, 0) / (w.length - 1)) * Math.sqrt(250); } else p.vol = null; });
 const CROSS = []; for (let i = 1; i < P.length; i++) { const a = P[i - 1], b = P[i]; if (a.s50 && a.s200 && b.s50 && b.s200) { if (a.s50 <= a.s200 && b.s50 > b.s200) CROSS.push({ p: b, k: "Golden cross" }); if (a.s50 >= a.s200 && b.s50 < b.s200) CROSS.push({ p: b, k: "Death cross" }); } }
 
 const state = { range: "all", type: "line", ov: { s20: false, s50: true, s200: true, vol: true } };
@@ -171,9 +196,9 @@ function renderPrice(V) {
   } else {
     const d = V.map((p, k) => `${k ? "L" : "M"}${sx(p.i)},${sy(p.c)}`).join("");
     el("path", { d: d + `L${sx(V[V.length - 1].i)},${top + H1}L${sx(V[0].i)},${top + H1}Z`, fill: "var(--actual)", opacity: .07 }, svg);
-    el("path", { d, fill: "none", stroke: "var(--actual)", "stroke-width": 1.75 }, svg);
+    el("path", { d, fill: "none", stroke: "var(--actual)", "stroke-width": 1.75, class: "wipe" }, svg);
   }
-  for (const [k, , c] of OVL.slice(0, 3)) if (state.ov[k]) { let d = "", pen = false; V.forEach(p => { if (p[k] == null) { pen = false; return; } d += (pen ? "L" : "M") + sx(p.i) + "," + sy(p[k]); pen = true; }); el("path", { d, fill: "none", stroke: `var(${c})`, "stroke-width": 1.75 }, svg); }
+  for (const [k, , c] of OVL.slice(0, 3)) if (state.ov[k]) { let d = "", pen = false; V.forEach(p => { if (p[k] == null) { pen = false; return; } d += (pen ? "L" : "M") + sx(p.i) + "," + sy(p[k]); pen = true; }); el("path", { d, fill: "none", stroke: `var(${c})`, "stroke-width": 1.75, class: "wipe" }, svg); }
   CROSS.filter(x => V.includes(x.p)).forEach(x => { const cx = sx(x.p.i), cy = sy(x.p.s50); el("circle", { cx, cy, r: 5, fill: "var(--surface)", stroke: x.k[0] === "G" ? "var(--up)" : "var(--dn)", "stroke-width": 2 }, svg); if (!narrow) txt(svg, cx, cy + (x.k[0] === "G" ? 18 : -10), x.k, { "text-anchor": "middle", "font-size": 11, fill: "var(--ink-2)" }); });
   V.filter(p => p.ca).forEach(p => { const cx = sx(p.i), cy = sy(p.c); el("path", { d: `M${cx},${cy - 7}l5,5l-5,5l-5,-5z`, fill: "var(--ink)" }, svg); });
   if (H2) {
@@ -200,7 +225,7 @@ function renderRSI(V) {
   for (const t of [0, 30, 50, 70, 100]) { el("line", { x1: left, x2: W - right, y1: sy(t), y2: sy(t), stroke: t === 30 || t === 70 ? "var(--axis)" : "var(--grid)", "stroke-dasharray": t === 30 || t === 70 ? "4 3" : "" }, svg); txt(svg, left - 6, sy(t), String(t), { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 11 }); }
   for (const p of monthTicks(V, W < 500 ? 3 : 5)) txt(svg, sx(p.i), H - 6, mLbl(p.d), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 });
   let d = "", pen = false; V.forEach(p => { if (p.rsi == null) { pen = false; return; } d += (pen ? "L" : "M") + sx(p.i) + "," + sy(p.rsi); pen = true; });
-  el("path", { d, fill: "none", stroke: "var(--actual)", "stroke-width": 1.5 }, svg);
+  el("path", { d, fill: "none", stroke: "var(--actual)", "stroke-width": 1.5, class: "wipe" }, svg);
   const cross = el("line", { y1: top, y2: H - bottom, stroke: "var(--ink-2)", opacity: 0 }, svg);
   const hit = el("rect", { x: left, y: top, width: W - left - right, height: H - top - bottom, fill: "transparent", style: "cursor:crosshair" }, svg);
   const mv = e => { const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width; let b = V[0]; for (const p of V) if (Math.abs(sx(p.i) - px) < Math.abs(sx(b.i) - px)) b = p; cross.setAttribute("x1", sx(b.i)); cross.setAttribute("x2", sx(b.i)); cross.setAttribute("opacity", .4); showTip(e, fdate(b.d), [{ label: "RSI 14", value: b.rsi == null ? "—" : b.rsi.toFixed(1) }, { label: "Status", value: b.rsi == null ? "—" : b.rsi > 70 ? "Overbought" : b.rsi < 30 ? "Oversold" : "Neutral" }, { label: "Close", value: fmtP(b.c) }]); };
@@ -221,11 +246,33 @@ function renderHist(V, S) {
     const x = left + i * slot + 1, w = slot - 2, col = Math.abs(b.mid) < .001 ? "var(--budget)" : b.mid > 0 ? "var(--up)" : "var(--dn)";
     const g = el("g", { class: "hit", tabindex: 0, "aria-label": `${(b.mid * 100).toFixed(0)}%: ${b.n} days` }, svg);
     el("rect", { x: x - 1, y: top, width: slot, height: H - top - bottom, fill: "transparent" }, g);
-    el("path", { d: rt(x, sy(b.n), w, sy(0) - sy(b.n), 3), fill: col, opacity: .85, class: "mk" }, g);
+    el("path", { d: rt(x, sy(b.n), w, sy(0) - sy(b.n), 3), fill: col, opacity: .85, class: "mk gy", style: `animation-delay:${i * 30}ms` }, g);
     if (i % 2 === 0 || W > 480) txt(g, x + w / 2, H - 12, (b.mid > 0 ? "+" : "") + (b.mid * 100).toFixed(0) + "%", { "text-anchor": "middle", fill: "var(--muted)", "font-size": 10.5 });
     bindTip(g, () => [`Daily change ≈ ${(b.mid > 0 ? "+" : "") + (b.mid * 100).toFixed(0)}%`, [{ label: "Days", value: String(b.n) }, { label: "Share of days", value: pctP(b.n / r.length, 1) }]]);
   });
   $("histSub").textContent = `${r.length} daily returns, 1-point buckets · mean ${pctS(Math.exp(S.mean) - 1, 2)} · σ ${pctP(S.sd, 2)} · ±5% buckets = limit-hit days`;
+}
+
+function renderVol(V) {
+  const box = $("vol"); box.replaceChildren();
+  const W = Math.max(300, box.clientWidth), left = W < 560 ? 48 : 64, right = W < 560 ? 8 : 16, top = 10, bottom = 24, H = 190;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Rolling 30-day annualised volatility" }, box);
+  const pts = V.filter(p => p.vol != null); if (!pts.length) { txt(svg, W / 2, H / 2, "Not enough history in this range", { "text-anchor": "middle" }); return; }
+  const sx = xScale(V, left, right, W), ticks = niceTicks(0, Math.max(...pts.map(p => p.vol)), 3), hi = ticks[ticks.length - 1], sy = v => top + (H - top - bottom) * (1 - v / hi), avg = pts.reduce((a, p) => a + p.vol, 0) / pts.length;
+  for (const t of ticks) { el("line", { x1: left, x2: W - right, y1: sy(t), y2: sy(t), stroke: t ? "var(--grid)" : "var(--axis)" }, svg); txt(svg, left - 8, sy(t), (t * 100).toFixed(0) + "%", { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  for (const p of monthTicks(V, W < 560 ? 4 : 9)) txt(svg, sx(p.i), H - 6, mLbl(p.d), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 });
+  const a = V.find(p => p.d === CLOSE_FROM), b = V.find(p => p.d === CLOSE_TO); if (a && b) el("rect", { x: sx(a.i), y: top, width: Math.max(6, sx(b.i) - sx(a.i)), height: H - top - bottom, fill: "var(--ink-2)", opacity: .1 }, svg);
+  const d = pts.map((p, k) => `${k ? "L" : "M"}${sx(p.i)},${sy(p.vol)}`).join("");
+  el("path", { d: d + `L${sx(pts[pts.length - 1].i)},${sy(0)}L${sx(pts[0].i)},${sy(0)}Z`, fill: "var(--sma200)", opacity: .1, class: "fade" }, svg);
+  el("path", { d, fill: "none", stroke: "var(--sma200)", "stroke-width": 1.75, class: "wipe" }, svg);
+  el("line", { x1: left, x2: W - right, y1: sy(avg), y2: sy(avg), stroke: "var(--ink-2)", "stroke-dasharray": "5 4" }, svg);
+  const pk = pts.reduce((x, y) => y.vol > x.vol ? y : x), last = pts[pts.length - 1];
+  el("circle", { cx: sx(pk.i), cy: sy(pk.vol), r: 4, fill: "var(--sma200)", stroke: "var(--surface)", "stroke-width": 2, class: "pop" }, svg); txt(svg, sx(pk.i) + (sx(pk.i) > W * .7 ? -8 : 8), sy(pk.vol) + 4, `Peak ${pctP(pk.vol, 0)}`, { "text-anchor": sx(pk.i) > W * .7 ? "end" : "start", "font-size": 11.5, fill: "var(--ink)", "font-weight": 600 });
+  const cross = el("line", { y1: top, y2: H - bottom, stroke: "var(--ink-2)", opacity: 0 }, svg), hit = el("rect", { x: left, y: top, width: W - left - right, height: H - top - bottom, fill: "transparent", style: "cursor:crosshair" }, svg);
+  const mv = e => { const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width; let q = pts[0]; for (const p of pts) if (Math.abs(sx(p.i) - px) < Math.abs(sx(q.i) - px)) q = p; cross.setAttribute("x1", sx(q.i)); cross.setAttribute("x2", sx(q.i)); cross.setAttribute("opacity", .4); showTip(e, fdate(q.d), [{ label: "30-day volatility (ann.)", value: pctP(q.vol, 1), color: css("--sma200") }, { label: "Range average", value: pctP(avg, 1), color: css("--ink-2"), dash: true }, { label: "Close", value: fmtP(q.c) }]); };
+  hit.addEventListener("pointermove", mv); hit.addEventListener("pointerleave", () => { hideTip(); cross.setAttribute("opacity", 0); });
+  $("volSub").textContent = `Standard deviation of the last 30 daily log returns × √250 · corporate-action days excluded · shaded = exchange closure`;
+  $("volRead").replaceChildren(h("b", { text: "Risk regime: " }), document.createTextNode(`Volatility peaked at ${pctP(pk.vol, 0)} around ${fdate(pk.d)} and averaged ${pctP(avg, 0)} over the range; the latest reading is ${pctP(last.vol, 0)}, ${last.vol > avg * 1.1 ? "above" : last.vol < avg * .9 ? "below" : "close to"} that average. Because daily moves are capped at ±5%, a run of limit-hit sessions shows up as sustained high volatility, not a single spike, and the true figure would be higher without the cap.`));
 }
 
 function renderDD(V, S) {
@@ -237,7 +284,7 @@ function renderDD(V, S) {
   for (const p of monthTicks(V, W < 560 ? 4 : 9)) txt(svg, sx(p.i), H - 6, mLbl(p.d), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 });
   const d = S.dd.map((o, k) => `${k ? "L" : "M"}${sx(o.p.i)},${sy(o.d)}`).join("");
   el("path", { d: d + `L${sx(V[V.length - 1].i)},${sy(0)}L${sx(V[0].i)},${sy(0)}Z`, fill: "var(--dn)", opacity: .15 }, svg);
-  el("path", { d, fill: "none", stroke: "var(--dn)", "stroke-width": 1.5 }, svg);
+  el("path", { d, fill: "none", stroke: "var(--dn)", "stroke-width": 1.5, class: "wipe" }, svg);
   if (S.mddAt) { const cx = sx(S.mddAt.i), cy = sy(S.mdd); el("circle", { cx, cy, r: 4, fill: "var(--dn)", stroke: "var(--surface)", "stroke-width": 2 }, svg); txt(svg, cx + (cx > W * .7 ? -8 : 8), cy - 6, `Max drawdown ${pctP(S.mdd, 0)}`, { "text-anchor": cx > W * .7 ? "end" : "start", "font-size": 11.5, fill: "var(--ink)", "font-weight": 600 }); }
   const cross = el("line", { y1: top, y2: H - bottom, stroke: "var(--ink-2)", opacity: 0 }, svg);
   const hit = el("rect", { x: left, y: top, width: W - left - right, height: H - top - bottom, fill: "transparent", style: "cursor:crosshair" }, svg);
@@ -251,8 +298,9 @@ function build() {
   segBind("rangeSeg", null, v => state.range = v, render); segBind("typeSeg", null, v => state.type = v, render);
   initTheme(render);
 }
-function render() { segSync("rangeSeg", state.range); segSync("typeSeg", state.type); const V = view(), S = stats(V); kpis(V, S); insights(V, S); renderPrice(V); renderRSI(V); renderHist(V, S); renderDD(V, S); }
+function render() { segSync("rangeSeg", state.range); segSync("typeSeg", state.type); const V = view(), S = stats(V); kpis(V, S); insights(V, S); renderPrice(V); renderRSI(V); renderHist(V, S); renderVol(V); renderDD(V, S); }
 build(); render(); onResize(render);
 </script>
+<script src="../../assets/motion.js"></script>
 </body>
 </html>

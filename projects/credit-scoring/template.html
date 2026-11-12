@@ -36,8 +36,8 @@
   <a class="backbtn" href="../../index.html">← Back to portfolio</a>
   <p class="eyebrow">Credit risk · Excel model</p>
   <h1>Bank Counterparty Credit Scoring Model</h1>
-  <p class="lede">A CAMELS-style scorecard that turns a bank's financial statements into an internal credit grade and an indicative probability of default. It is the kind of model a financial-institutions desk uses to set interbank and trade-finance limits. Pick a bank, or edit any input and watch the rating respond.</p>
-  <ul class="tags"><li>Credit analysis</li><li>Counterparty rating</li><li>Probability of default</li><li>Excel modelling</li><li>Scenario testing</li></ul>
+  <p class="lede">A CAMELS-style scorecard that turns a bank's published financial statements into an internal credit grade and an indicative probability of default: the kind of model a financial-institutions desk relies on when it sets interbank and trade-finance limits for counterparties that often have no external rating. Pick a bank, edit any input, apply a stress test, and see which numbers the rating actually depends on.</p>
+  <ul class="tags"><li>Credit analysis</li><li>Counterparty rating</li><li>Probability of default</li><li>Excel modelling</li><li>Stress &amp; sensitivity analysis</li></ul>
   <a class="dl" href="Bank_Credit_Scoring_Model.xlsx" download>⬇ Download the Excel model (.xlsx)</a>
   <div class="note info" role="note"><span aria-hidden="true">ⓘ</span><div><strong>Data &amp; calibration:</strong> inputs come from the banks' public Q4 2024 statements (SCFMS), in SYP millions. Thresholds, weights and the PD scale are the <strong>author's own illustrative calibration</strong>, not any institution's official methodology. Demonstration only, not a credit opinion.</div></div>
 </div>
@@ -69,11 +69,43 @@
     </div>
   </div>
 
+  <div class="grid2">
+    <div class="card panel">
+      <div class="panelhead"><div><h2>Sensitivity: which inputs move the score?</h2><p class="sub" id="torSub"></p></div>
+        <div class="seg" id="shockSeg"><button type="button" data-v="0.1">±10%</button><button type="button" data-v="0.2">±20%</button><button type="button" data-v="0.3">±30%</button></div></div>
+      <div class="legend"><span><i class="sw" style="background:var(--good)"></i>Score improves</span><span><i class="sw" style="background:var(--bad)"></i>Score weakens</span><span style="color:var(--muted)">One input flexed at a time</span></div>
+      <div class="chart" id="tor"></div>
+      <div class="read" id="torRead"></div>
+    </div>
+    <div class="card panel">
+      <h2>Stress scenario comparison</h2>
+      <p class="sub" id="scnSub"></p>
+      <div class="legend"><span><i class="sw" style="background:var(--actual)"></i>Scenario shown above</span><span><i class="sw" style="background:var(--budget)"></i>Other scenarios</span></div>
+      <div class="chart" id="scn"></div>
+      <div class="read" id="scnRead"></div>
+    </div>
+  </div>
+
   <div class="card panel full">
     <h2>Peer ranking</h2>
     <p class="sub">Every bank scored with the same model (published inputs, no stress) · click a bar to load that bank</p>
     <div class="legend"><span><i class="sw" style="background:var(--actual)"></i>Selected bank</span><span><i class="sw" style="background:var(--budget)"></i>Peers</span></div>
     <div class="chart" id="peer"></div>
+  </div>
+
+  <h2 class="sechead">How the model supports a credit decision</h2>
+  <div class="story">
+    <div class="card"><h3>Business problem</h3><p>Before a bank places funds with another bank or confirms its trade-finance paper, it needs a consistent, explainable view of that counterparty's credit quality. Many regional banks carry no agency rating, so the assessment has to be built from their financial statements and applied the same way to every name.</p></div>
+    <div class="card"><h3>Calculation logic</h3><ul>
+      <li>Nine ratios across five pillars are each graded <b>A–E (1–5 points)</b> against four cut-offs.</li>
+      <li><b>Weighted score</b> = Σ points × weight. It maps to a 12-notch scale (AA to CCC), each with an indicative one-year PD.</li>
+      <li>A ratio that cannot be computed meaningfully (negative equity or income) scores <b>E</b>, so missing strength is never assumed.</li>
+      <li>An optional <b>sovereign ceiling</b> caps the result at the country rating.</li></ul></div>
+    <div class="card"><h3>Using the output</h3><ul>
+      <li>The grade and PD are the inputs a limit proposal and an expected-credit-loss calculation need.</li>
+      <li>The <b>sensitivity chart</b> shows which reported figures the grade hinges on, and therefore which to verify first.</li>
+      <li>The <b>stress comparison</b> shows how many notches of headroom a counterparty has before a limit review would be triggered.</li>
+      <li>Grades step at thresholds, so a small input change can move a ratio a full band or not at all.</li></ul></div>
   </div>
 
   <section class="about">
@@ -89,6 +121,7 @@
       <dl>
         <dt>Excel workbook</dt><dd>6 sheets: Cover · Inputs · Scorecard · Peer Ranking · Assumptions · Peer Data · 390+ live formulas, no hard-coded results</dd>
         <dt>Features</dt><dd>Bank selector · input overrides · editable thresholds &amp; weights · sovereign ceiling · peer ranking</dd>
+        <dt>Web version adds</dt><dd>One-at-a-time input sensitivity · side-by-side stress scenarios with notch migration</dd>
         <dt>Background</dt><dd>A public, independent version of the approach behind the counterparty Credit Rating Model I co-developed with the Risk Management Department at Al Baraka Bank Syria. Thresholds, weights, rating scale and data here are my own or public; no internal parameters are used.</dd>
       </dl>
       <a class="dl" href="Bank_Credit_Scoring_Model.xlsx" download>⬇ Download (.xlsx)</a>
@@ -114,10 +147,12 @@ const RAT = [
   ["Cost-to-income", "Efficiency", "L", [.45, .55, .65, .80], .10, v => v[11] > 0 ? v[12] / v[11] : null],
 ];
 const SCALE = [[1.0, "AA", .0003], [1.4, "A", .0006], [1.8, "BBB+", .0010], [2.1, "BBB", .0017], [2.4, "BBB-", .0027], [2.7, "BB+", .0045], [3.0, "BB", .0075], [3.3, "BB-", .013], [3.6, "B+", .022], [3.9, "B", .038], [4.2, "B-", .065], [4.5, "CCC", .25]];
-const state = { bank: "BBSF", vals: null, stress: "0", ceil: "None" };
+const state = { bank: "BBSF", vals: null, stress: "0", ceil: "None", shock: "0.2" };
 
 function pts(r, x) { if (x == null || !isFinite(x)) return 5; const [a, b, c, d] = r[3]; if (r[2] === "H") return x >= a ? 1 : x >= b ? 2 : x >= c ? 3 : x >= d ? 4 : 5; return x <= a ? 1 : x <= b ? 2 : x <= c ? 3 : x <= d ? 4 : 5; }
-function stressed(v) { v = v.slice(); if (state.stress === "1") { v[3] *= 1.5; } if (state.stress === "2") { const cut = Math.abs(v[13]) * .5; v[13] -= cut; v[11] -= cut; } if (state.stress === "3") { const out = v[5] * .2; v[5] -= out; v[1] -= out; v[7] -= out; v[0] -= out; } return v; }
+function applyStress(v, codes) { v = v.slice(); if (codes.includes("1")) { v[3] *= 1.5; } if (codes.includes("2")) { const cut = Math.abs(v[13]) * .5; v[13] -= cut; v[11] -= cut; } if (codes.includes("3")) { const out = v[5] * .2; v[5] -= out; v[1] -= out; v[7] -= out; v[0] -= out; } return v; }
+function stressed(v) { return applyStress(v, state.stress === "0" ? "" : state.stress); }
+const notch = s => { let k = 0; SCALE.forEach((g, i) => { if (s >= g[0] - 1e-9) k = i; }); return k; };
 function score(v) { const rows = RAT.map(r => { const x = r[5](v); const p = pts(r, x); return { r, x, p, w: r[4] }; }); const s = rows.reduce((t, o) => t + o.p * o.w, 0); let k = 0; SCALE.forEach((g, i) => { if (s >= g[0] - 1e-9) k = i; }); return { rows, s, k }; }
 function finalIdx(k) { if (state.ceil === "None") return k; const c = SCALE.findIndex(g => g[1] === state.ceil); return Math.max(k, c); }
 const bank = c => DATA.banks.find(b => b.c === c);
@@ -128,8 +163,8 @@ function build() {
   bs.onchange = () => { state.bank = bs.value; state.vals = null; render(); };
   const cs = $("ceilSel"); ["None", ...SCALE.map(g => g[1])].forEach(x => cs.appendChild(h("option", { value: x, text: x === "None" ? "None (Syria unrated)" : x })));
   cs.onchange = () => { state.ceil = cs.value; render(); };
-  segBind("stressSeg", null, v => state.stress = v, render);
-  $("resetBtn").onclick = () => { state.vals = null; state.stress = "0"; state.ceil = "None"; render(); };
+  segBind("stressSeg", null, v => state.stress = v, render); segBind("shockSeg", null, v => state.shock = v, render);
+  $("resetBtn").onclick = () => { state.vals = null; state.stress = "0"; state.ceil = "None"; state.shock = "0.2"; render(); };
   const t = $("thr"); t.appendChild(h("thead", {}, h("tr", {}, ...["Ratio", "Weight", "A", "B", "C", "D", "E"].map(x => h("th", { text: x })))));
   const tb = h("tbody"); RAT.forEach((r, i) => { const s = r[2] === "H" ? "≥ " : "≤ "; tb.appendChild(h("tr", {}, h("td", { text: r[0] }), h("td", { text: pctP(r[4], 0) }), ...r[3].map(c => h("td", { text: s + pctP(c, i === 4 || i === 5 ? 2 : 0) })), h("td", { text: r[2] === "H" ? "< D" : "> D" }))); }); t.appendChild(tb);
   initTheme(render);
@@ -177,12 +212,55 @@ function render() {
     const gg = el("g", { class: "hit", tabindex: 0, role: "button", "aria-label": `${p.n}: score ${p.s.toFixed(2)}, ${SCALE[k][1]}` }, ps);
     el("rect", { x: 0, y: y - 4, width: PW, height: rowH, fill: sel ? "var(--accent)" : "transparent", opacity: sel ? .07 : 1 }, gg);
     txt(gg, 0, y + 9, `${i + 1}. ${narrow ? p.c : p.n}`, { "dominant-baseline": "middle", fill: sel ? "var(--ink)" : "var(--ink-2)", "font-weight": sel ? 650 : 400 });
-    el("path", { d: rr(px(1), y, px(p.s) - px(1), 18, 3), fill: sel ? "var(--actual)" : "var(--budget)", class: "mk" }, gg);
+    el("path", { d: rr(px(1), y, px(p.s) - px(1), 18, 3), fill: sel ? "var(--actual)" : "var(--budget)", class: "mk gx", style: `animation-delay:${i * 20}ms` }, gg);
     txt(gg, PW, y + 9, `${p.s.toFixed(2)}  ${SCALE[k][1]}`, { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--ink)", "font-weight": sel ? 650 : 500 });
     onActivate(gg, () => { state.bank = p.c; state.vals = null; render(); });
   });
+  renderTornado(); renderScenarios();
+}
+/* ---------- sensitivity: flex one input at a time ---------- */
+const SENS = [[[3], "Non-performing loans"], [[4], "ECL provisions"], [[8, 9], "Equity & regulatory capital"], [[10], "Risk-weighted assets"], [[13], "Net income"], [[11], "Operating income"], [[12], "Operating expenses"], [[1], "Liquid assets"], [[5], "Customer deposits"]];
+function renderTornado() {
+  segSync("shockSeg", state.shock);
+  const sh = +state.shock, base = stressed(state.vals), b0 = score(base), flex = (ix, k) => { const v = base.slice(); ix.forEach(i => v[i] *= k); return score(v); };
+  const list = SENS.map(([ix, l]) => { const lo = flex(ix, 1 - sh), hi = flex(ix, 1 + sh); return { l, lo: lo.s - b0.s, hi: hi.s - b0.s, klo: lo.k, khi: hi.k }; }).sort((a, b) => Math.max(Math.abs(b.lo), Math.abs(b.hi)) - Math.max(Math.abs(a.lo), Math.abs(a.hi)));
+  const box = $("tor"); box.replaceChildren(); const W = Math.max(300, box.clientWidth), narrow = W < 480, labelW = narrow ? 118 : 178, rowH = 30, top = 4, bottom = 22, H = top + rowH * list.length + bottom, pad = 58;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Sensitivity of the weighted score to each input" }, box);
+  const lim = Math.max(.2, ...list.flatMap(x => [Math.abs(x.lo), Math.abs(x.hi)])), cx = labelW + (W - labelW) / 2, half = (W - labelW) / 2 - pad, sx = v => cx + half * v / lim;
+  for (const t of [-lim, 0, lim]) { el("line", { x1: sx(t), x2: sx(t), y1: top, y2: H - bottom, stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, sx(t), H - 6, t === 0 ? `score ${b0.s.toFixed(2)}` : (t > 0 ? "+" : "−") + Math.abs(t).toFixed(2), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  list.forEach((x, i) => {
+    const y = top + i * rowH + 5, bh = rowH - 11, g = el("g", { class: "hit", tabindex: 0, "aria-label": `${x.l}: ${x.lo.toFixed(2)} to ${x.hi.toFixed(2)}` }, svg); el("rect", { x: 0, y: y - 5, width: W, height: rowH, fill: "transparent" }, g);
+    txt(g, 0, y + bh / 2, x.l, { "dominant-baseline": "middle", "font-size": 12, fill: "var(--ink)" });
+    if (Math.abs(x.lo) < 1e-9 && Math.abs(x.hi) < 1e-9) txt(g, cx + 6, y + bh / 2, "no grade change", { "dominant-baseline": "middle", "font-size": 11, fill: "var(--muted)" });
+    for (const [v, tag, k] of [[x.lo, "−", x.klo], [x.hi, "+", x.khi]]) { if (Math.abs(v) < 1e-9) continue; const pos = v > 0; el("path", { d: pos ? rr(cx, y, sx(v) - cx, bh, 3) : rl(sx(v), y, cx - sx(v), bh, 3), fill: pos ? "var(--bad)" : "var(--good)", opacity: .9, class: "mk " + (pos ? "gx" : "gxr") }, g); txt(g, sx(v) + (pos ? 5 : -5), y + bh / 2, `${tag}${Math.round(sh * 100)}%${k !== b0.k ? " → " + SCALE[k][1] : ""}`, { "text-anchor": pos ? "start" : "end", "dominant-baseline": "middle", "font-size": 10.5, fill: k !== b0.k ? "var(--ink)" : "var(--muted)", "font-weight": k !== b0.k ? 650 : 400 }); }
+    bindTip(g, () => [x.l, [{ label: `Input −${Math.round(sh * 100)}%`, value: `${(b0.s + x.lo).toFixed(2)} · ${SCALE[x.klo][1]}`, cls: x.lo < 0 ? "up" : x.lo > 0 ? "down" : "" }, { label: "Current", value: `${b0.s.toFixed(2)} · ${SCALE[b0.k][1]}` }, { label: `Input +${Math.round(sh * 100)}%`, value: `${(b0.s + x.hi).toFixed(2)} · ${SCALE[x.khi][1]}`, cls: x.hi < 0 ? "up" : x.hi > 0 ? "down" : "" }]]);
+  });
+  const mv = list.filter(x => x.klo !== b0.k || x.khi !== b0.k), flat = list.filter(x => Math.abs(x.lo) < 1e-9 && Math.abs(x.hi) < 1e-9);
+  $("torSub").textContent = `${bank(state.bank).n} · change in weighted score (lower = stronger) when one input moves ±${Math.round(sh * 100)}%${state.stress !== "0" ? " · on top of the selected stress" : ""}`;
+  $("torRead").replaceChildren(h("b", { text: "Reading it: " }), document.createTextNode((mv.length ? `The rating notch changes with a ${Math.round(sh * 100)}% move in: ${mv.slice(0, 3).map(x => x.l.toLowerCase()).join("; ")}. ` : `No single ${Math.round(sh * 100)}% move changes the rating notch, so the grade is stable to reporting noise of that size. `) + (flat.length ? `${flat.length} of ${list.length} inputs produce no change at all: the affected ratios sit well inside a grade band, which is how a threshold scorecard behaves.` : "Every input shifts at least one ratio across a grade boundary.")));
+}
+/* ---------- stress scenarios side by side ---------- */
+function renderScenarios() {
+  const S = [["", "Published inputs", "0"], ["1", "NPLs +50%", "1"], ["2", "Profit −50%", "2"], ["3", "Deposit run −20%", "3"], ["123", "All three combined", null]].map(([c, l, key]) => { const r = score(applyStress(state.vals, c)); return { l, key, s: r.s, k: r.k, f: finalIdx(r.k) }; });
+  const box = $("scn"); box.replaceChildren(); const W = Math.max(300, box.clientWidth), narrow = W < 480, lw = narrow ? 112 : 150, vw = narrow ? 104 : 150, rowH = 38, top = 4, bottom = 22, H = top + rowH * S.length + bottom;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Score and rating under each stress scenario" }, box), px = v => lw + (W - lw - vw) * (v - 1) / 4;
+  for (const t of [1, 2, 3, 4, 5]) { el("line", { x1: px(t), x2: px(t), y1: top, y2: H - bottom, stroke: "var(--grid)" }, svg); txt(svg, px(t), H - 6, String(t), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  S.forEach((x, i) => {
+    const y = top + i * rowH + 7, bh = 20, cur = x.key === state.stress, d = x.f - S[0].f;
+    const g = el("g", Object.assign({ class: "hit", "aria-label": `${x.l}: score ${x.s.toFixed(2)}, ${SCALE[x.f][1]}` }, x.key != null ? { tabindex: 0, role: "button" } : {}), svg); el("rect", { x: 0, y: y - 7, width: W, height: rowH, fill: cur ? "var(--accent)" : "transparent", opacity: cur ? .07 : 1 }, g);
+    txt(g, 0, y + bh / 2, x.l, { "dominant-baseline": "middle", "font-size": 12, fill: "var(--ink)", "font-weight": cur ? 650 : 400 });
+    el("path", { d: rr(px(1), y, Math.max(2, px(x.s) - px(1)), bh, 3), fill: cur ? "var(--actual)" : "var(--budget)", class: "mk gx", style: `animation-delay:${i * 50}ms` }, g);
+    txt(g, W, y + bh / 2 - (narrow ? 0 : 0), `${x.s.toFixed(2)} · ${SCALE[x.f][1]}${narrow ? "" : " · PD " + pctP(SCALE[x.f][2], 2)}`, { "text-anchor": "end", "dominant-baseline": "middle", "font-size": 12, fill: "var(--ink)", "font-weight": 650 });
+    if (i) txt(g, px(x.s) + 6, y + bh / 2, d === 0 ? "no change" : `${d > 0 ? "▼" : "▲"} ${Math.abs(d)} notch${Math.abs(d) > 1 ? "es" : ""}`, { "dominant-baseline": "middle", "font-size": 10.5, fill: d > 0 ? "var(--bad-ink)" : d < 0 ? "var(--good-ink)" : "var(--muted)", "font-weight": 600 });
+    bindTip(g, () => [x.l, [{ label: "Weighted score", value: x.s.toFixed(2) }, { label: "Rating", value: SCALE[x.f][1] + (x.f !== x.k ? " (capped)" : "") }, { label: "Indicative PD", value: pctP(SCALE[x.f][2], 2) }, ...(i ? [{ label: "vs published", value: d === 0 ? "no change" : `${Math.abs(d)} notch${Math.abs(d) > 1 ? "es" : ""} ${d > 0 ? "weaker" : "stronger"}`, cls: d > 0 ? "down" : d < 0 ? "up" : "" }, { label: "PD multiple", value: (SCALE[x.f][2] / SCALE[S[0].f][2]).toFixed(1) + "×" }] : [])]]);
+    if (x.key != null) onActivate(g, () => { state.stress = x.key; render(); });
+  });
+  const single = S.slice(1, 4).sort((a, b) => b.s - a.s)[0], all = S[4], d1 = single.f - S[0].f, d2 = all.f - S[0].f;
+  $("scnSub").textContent = `${bank(state.bank).n} · current inputs · weighted score (bar), final rating and indicative PD · click a scenario to apply it to the page`;
+  $("scnRead").replaceChildren(h("b", { text: "Headroom: " }), document.createTextNode(S.every(x => Math.abs(x.s - S[0].s) < 1e-9) ? "None of the stress tests moves a ratio across a grade boundary for this bank: its weak ratios are already in the lowest band they can reach under these shocks and its strong ratios have room to absorb them. Select another bank to see a rating that does migrate." : `The most damaging single shock is ${single.l} (${d1 === 0 ? "no notch change" : d1 + " notch" + (d1 > 1 ? "es" : "") + " weaker"}, to ${SCALE[single.f][1]}). All three together take the rating from ${SCALE[S[0].f][1]} to ${SCALE[all.f][1]}` + (d2 ? `, raising the indicative PD from ${pctP(SCALE[S[0].f][2], 2)} to ${pctP(SCALE[all.f][2], 2)}.` : ", leaving the PD unchanged.") + " A counterparty that loses several notches under a plausible shock warrants a smaller or shorter-dated limit than its headline grade suggests."));
 }
 build(); render(); onResize(render);
 </script>
+<script src="../../assets/motion.js"></script>
 </body>
 </html>

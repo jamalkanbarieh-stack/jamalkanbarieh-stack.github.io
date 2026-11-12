@@ -8,11 +8,11 @@
 const SITE = {
   name: "Jamal Kanbarieh",
   headline: "Financial Analyst · Financial Institutions & Credit Analysis · FP&A & Financial Control",
-  intro: "I turn bank financial statements, budgets and market data into decisions: variance analysis, peer benchmarking, counterparty credit scoring and research-grade analytics, delivered as interactive Power BI and Excel tools.",
+  intro: "I turn bank financial statements, budgets, payment flows and market data into decisions: variance analysis, driver-based forecasting, peer benchmarking, counterparty credit scoring and research-grade analytics, delivered as interactive Power BI and Excel tools.",
   bio: [
     "I'm a Financial Analyst with nearly three years of banking experience across financial institutions analysis, budgeting and financial control, investment analysis, economic research and financial data analysis. I hold an MBA in Financial Management and I'm based in Dubai.",
     "Most recently, as a Financial Institutions Analyst in the Treasury & Investment Department of Al Baraka Bank Syria, I co-developed the bank's counterparty credit rating model with the Risk Management Department. It converts published financial statements into a ratio scorecard, an S&P-equivalent grade and a probability of default used in expected-credit-loss calculations. I assessed prospective local and international banks during a roughly 80% expansion of the correspondent network after international sanctions were lifted, produced close to half of the counterparty ratings in the bulk limit renewal, and monitored Nostro/Vostro exposures and credit-limit utilisation.",
-    "I also built the bank's Correspondent Banking Channel Utilization Dashboards end to end in Power BI: data extracted from the core banking system, ECB exchange rates integrated through Power Query and multi-currency transactions consolidated. Quarterly updates are now largely automated.",
+    "I also built the bank's Correspondent Banking Channel Utilization Dashboards end to end in Power BI: data extracted from the core banking system, ECB exchange rates integrated through Power Query and multi-currency transactions consolidated. Quarterly updates are now largely automated. Alongside it I built the Correspondent Banking Channel Transaction Demand & Volume Forecasting Model, which forecasts monthly transfer demand from branch-level estimates, confidence-weighted assumptions and a 12-month adoption curve, and projects the impact on Nostro balances, fee income, liquidity carry and net contribution.",
     "Before that, as a Budget & Financial Control Analyst at Bank Al Sharq, I helped prepare the annual budget, ran monthly budget-versus-actual analysis with performance commentary for department heads, prepared management and Board reporting packs and 16 ALCO packages, and wrote the financial sections of the Annual Report. I also established the bank's financial e-newsletter for Senior Management. I began my career at Banque Bemo Saudi Fransi.",
     "I'm looking for financial analyst, FP&A, budgeting & planning, and credit or financial-institutions analyst roles."
   ],
@@ -36,17 +36,26 @@ const PROJECTS = [
     slug: "credit-scoring",
     title: "Bank Counterparty Credit Scoring Model",
     summary: "A public, independent version of the counterparty rating approach I co-developed with Risk Management: a scorecard turning a bank's statements into an internal rating and indicative PD, with stress tests, a sovereign ceiling and peer ranking. Comes with a fully formula-driven Excel model to download.",
-    roles: ["credit"],
-    tags: ["Excel model", "Credit risk", "Probability of default", "Stress testing"],
+    roles: ["credit", "model"],
+    tags: ["Excel model", "Credit risk", "Probability of default", "Stress & sensitivity"],
     highlights: ["Live in-browser model", "390+ formula Excel workbook"],
     excel: "projects/credit-scoring/Bank_Credit_Scoring_Model.xlsx", featured: true
   },
   {
+    slug: "correspondent-demand",
+    title: "Demand Estimation & Financial Model Methodology",
+    summary: "Financial modelling case study: estimating demand for a new correspondent banking channel from survey data, confidence weighting and a 12-month adoption curve, then carrying it through to nostro balances, fee income, liquidity carry and net contribution under three scenarios.",
+    roles: ["model", "fpa"],
+    tags: ["Driver-based forecast", "Correspondent banking", "Scenario analysis", "Sensitivity (tornado)"],
+    highlights: ["Simulated data, anonymised institutions", "Live sliders recalculate the model"],
+    excel: false, featured: true
+  },
+  {
     slug: "budget-variance",
     title: "Treasury Revenues: Budget vs Actual & Variance Analysis",
-    summary: "Monthly and year-to-date budget tracking for three treasury revenue streams in USD and SYP, with a variance bridge, stream drill-down, a variance heat map and automatic findings.",
+    summary: "Monthly and year-to-date budget tracking for three treasury revenue streams in USD and SYP, with a variance bridge, stream drill-down, a variance heat map, a run-rate full-year forecast and automatic findings.",
     roles: ["fpa"],
-    tags: ["Power BI", "Budgeting", "Variance analysis", "YTD time intelligence"],
+    tags: ["Power BI", "Budgeting", "Variance analysis", "Forecast vs actual"],
     highlights: ["Fictional data (confidentiality)", "Data-quality check built in"],
     excel: false, featured: true
   },
@@ -70,4 +79,4 @@ const PROJECTS = [
   }
 ];
 
-const ROLES = { fpa: "Budgeting & FP&A", credit: "Credit analysis", analysis: "Financial analysis", research: "Research & econometrics" };
+const ROLES = { fpa: "Budgeting & FP&A", model: "Financial modelling", credit: "Credit analysis", analysis: "Financial analysis", research: "Research & econometrics" };

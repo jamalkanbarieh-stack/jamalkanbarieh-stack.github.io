@@ -1,12 +1,13 @@
 # Jamal Kanbarieh · Financial Analysis Portfolio
 
-A static website (plain HTML/CSS/JS, no frameworks, no build server) with five interactive projects. It runs on any static host and opens directly in a browser.
+A static website (plain HTML/CSS/JS, no frameworks, no build server) with six interactive projects. It runs on any static host and opens directly in a browser.
 
 ```
 index.html                     ← home page (content comes from assets/projects.js)
 assets/
   projects.js                  ← EDIT ME: name, headline, bio, contact links, project list
   site.css · common.js         ← shared design and chart helpers
+  motion.js                    ← scroll reveal, KPI counters, chart and page transitions (off for reduced-motion users)
   thumbs/*.jpg                 ← 720×405 project preview images
 projects/
   budget-variance/             ← Budget vs actual (fictional data)
@@ -14,6 +15,8 @@ projects/
   thesis/                      ← Master's research dashboard
   stock-technicals/            ← BBSF price/trend/momentum
   credit-scoring/              ← Credit scoring model + Bank_Credit_Scoring_Model.xlsx
+  correspondent-demand/        ← Correspondent-channel demand & financial model (SIMULATED data)
+                                 make_data.py → data.json + CSVs · model.js = calculation logic
 build.py                       ← re-inlines each project's JSON data into its index.html
 ```
 

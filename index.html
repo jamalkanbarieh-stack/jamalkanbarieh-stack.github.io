@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jamal Kanbarieh · Financial Analysis Portfolio</title>
-<meta name="description" content="Interactive financial analysis portfolio of Jamal Kanbarieh: budgeting and variance analysis, bank peer benchmarking, credit scoring and research, built in Power BI and Excel.">
+<meta name="description" content="Interactive financial analysis portfolio of Jamal Kanbarieh: budgeting and variance analysis, financial modelling and forecasting, bank peer benchmarking, credit scoring and research, built in Power BI and Excel.">
 <meta property="og:title" content="Jamal Kanbarieh · Financial Analysis Portfolio">
-<meta property="og:description" content="Interactive dashboards and models: budgeting & FP&A, bank peer benchmarking, credit scoring, econometric research.">
+<meta property="og:description" content="Interactive dashboards and models: budgeting & FP&A, financial modelling & forecasting, bank peer benchmarking, credit scoring, econometric research.">
 <meta property="og:image" content="assets/thumbs/banking-sector.jpg">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f2a47'/%3E%3Cpath d='M8 22V14M14 22V9M20 22v-6M26 22V12' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/site.css">
@@ -37,8 +37,22 @@ h2.sec{font-size:22px;color:var(--navy);margin:40px 0 4px;letter-spacing:-.01em}
 .cap .lk{font-size:13px}
 .cap .lk a{margin-right:10px}
 .pgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.pcard{display:flex;flex-direction:column;overflow:hidden;text-decoration:none;color:inherit;transition:transform .12s, box-shadow .12s}
-.pcard:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(15,42,71,.12)}
+.pcard{display:flex;flex-direction:column;overflow:hidden;text-decoration:none;color:inherit;transition:transform .22s var(--ease), box-shadow .22s ease, border-color .2s ease}
+.pcard:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(15,42,71,.14);border-color:color-mix(in srgb,var(--accent) 45%,var(--ring))}
+.pcard .thumb img{transition:transform .5s var(--ease)}
+.pcard:hover .thumb img{transform:scale(1.035)}
+.pcard .open{display:inline-flex;gap:4px;transition:gap .2s var(--ease)}
+.pcard:hover .open{gap:10px}
+html.mo.anim .pcard{animation:pgin .35s var(--ease) both}
+.cap,.how .card,.stat{transition:transform .2s var(--ease),box-shadow .2s ease}
+.cap:hover,.how .card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(15,42,71,.1)}
+.cap .lk a{text-decoration:none;border-bottom:1px solid transparent;transition:border-color .15s}
+.cap .lk a:hover{border-bottom-color:currentColor}
+.nav a{position:relative;padding:4px 0}
+.nav a::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;border-radius:2px;background:var(--accent);transform:scaleX(0);transition:transform .22s var(--ease)}
+.nav a:hover::after,.nav a.on::after{transform:scaleX(1)}
+.nav a.on{color:var(--ink)}
+header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(8px)}
 .pcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .thumb{aspect-ratio:16/9;background:var(--surface-2);border-bottom:1px solid var(--ring);overflow:hidden}
 .thumb img{width:100%;height:100%;object-fit:cover;object-position:top left;display:block}
@@ -83,7 +97,7 @@ h2.sec{font-size:22px;color:var(--navy);margin:40px 0 4px;letter-spacing:-.01em}
 
 <main class="wrap" style="padding-top:0">
   <div class="stats">
-    <div class="card stat"><b>5</b><span>interactive projects, no download or login needed</span></div>
+    <div class="card stat"><b>6</b><span>interactive projects, no download or login needed</span></div>
     <div class="card stat"><b>15</b><span>banks benchmarked across 20 financial metrics</span></div>
     <div class="card stat"><b>240+</b><span>DAX measures across the Power BI models</span></div>
     <div class="card stat"><b>36</b><span>bank-year panel behind my MBA research</span></div>
@@ -97,8 +111,8 @@ h2.sec{font-size:22px;color:var(--navy);margin:40px 0 4px;letter-spacing:-.01em}
   <h2 class="sec" id="capabilities">What I bring to the role</h2>
   <p class="secsub">Mapped to the work each project demonstrates</p>
   <div class="caps">
-    <div class="card cap"><h3>Budgeting &amp; FP&amp;A</h3><p>Budget vs actual tracking, YTD time intelligence, variance bridges and plain-language commentary for management.</p><div class="lk"><a href="projects/budget-variance/index.html">Budget variance →</a></div></div>
-    <div class="card cap"><h3>Credit &amp; counterparty analysis</h3><p>Scorecard ratings, PD mapping, stress testing and peer comparison of banks for limit setting.</p><div class="lk"><a href="projects/credit-scoring/index.html">Credit model →</a><a href="projects/banking-sector/index.html">Peer benchmark →</a></div></div>
+    <div class="card cap"><h3>Budgeting, forecasting &amp; FP&amp;A</h3><p>Budget vs actual tracking, variance bridges, run-rate and driver-based forecasts, scenario and sensitivity analysis, with plain-language commentary for management.</p><div class="lk"><a href="projects/budget-variance/index.html">Budget variance →</a><a href="projects/correspondent-demand/index.html">Demand &amp; contribution model →</a></div></div>
+    <div class="card cap"><h3>Credit &amp; counterparty analysis</h3><p>Scorecard ratings, PD mapping, stress testing and peer comparison of banks for limit setting and correspondent relationships.</p><div class="lk"><a href="projects/credit-scoring/index.html">Credit model →</a><a href="projects/banking-sector/index.html">Peer benchmark →</a></div></div>
     <div class="card cap"><h3>Financial statement &amp; ratio analysis</h3><p>Profitability, efficiency, asset quality, liquidity and capital ratios, adjusted for FX revaluation distortions.</p><div class="lk"><a href="projects/banking-sector/index.html">Peer benchmark →</a></div></div>
     <div class="card cap"><h3>BI &amp; data modelling</h3><p>Power BI star schemas, 100+ measure DAX models, Power Query cleaning of Arabic-language and multi-source data.</p><div class="lk"><a href="projects/thesis/index.html">Thesis model →</a><a href="projects/banking-sector/index.html">Sector model →</a></div></div>
     <div class="card cap"><h3>Research &amp; statistics</h3><p>Panel regression, hypothesis testing, concentration indices and honest interpretation of the limits of evidence.</p><div class="lk"><a href="projects/thesis/index.html">Research →</a></div></div>
@@ -108,8 +122,8 @@ h2.sec{font-size:22px;color:var(--navy);margin:40px 0 4px;letter-spacing:-.01em}
   <h2 class="sec">How this portfolio was built</h2>
   <div class="how">
     <div class="card"><h3>Built in Power BI &amp; Excel</h3><p>Each project started as a Power BI report or Excel model. The web versions recalculate every figure from the original data and DAX logic, so they run in any browser without a Microsoft account.</p></div>
-    <div class="card"><h3>Confidentiality first</h3><p>Only public disclosures are used, and employer-internal material is excluded. Where a project mirrors internal work, as with the budget dashboard, the data is fictional and labelled as such.</p></div>
-    <div class="card"><h3>Transparent methods</h3><p>Every page states its data source, definitions and data-quality caveats, and includes an "About this analysis" section explaining the question, the approach and what was improved.</p></div>
+    <div class="card"><h3>Confidentiality first</h3><p>Only public disclosures are used, and employer-internal material is excluded. Where a project mirrors internal work, as with the budget dashboard and the correspondent-channel model, the data is fictional or simulated, institutions are anonymised, and the page says so.</p></div>
+    <div class="card"><h3>Transparent methods</h3><p>Every page states its data source, formulas, assumptions and data-quality caveats, and explains the business question, how to read each chart and what the result means for a decision.</p></div>
   </div>
 
   <h2 class="sec" id="about">About</h2>
@@ -167,6 +181,11 @@ function cards() {
   });
 }
 chips(); cards(); initTheme();
+/* highlight the nav link of the section in view */
+(function () { const links = [...document.querySelectorAll(".nav a")], secs = links.map(a => document.querySelector(a.getAttribute("href"))); if (!("IntersectionObserver" in window)) return;
+  const set = () => { const y = scrollY + 140; let cur = -1; secs.forEach((s, i) => { if (s && s.getBoundingClientRect().top + scrollY <= y) cur = i; }); links.forEach((a, i) => a.classList.toggle("on", i === cur)); };
+  addEventListener("scroll", set, { passive: true }); set(); })();
 </script>
+<script src="assets/motion.js"></script>
 </body>
 </html>

@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Correspondent Channel Demand &amp; Financial Model</title>
+<meta name="description" content="Financial modelling case study by Jamal Kanbarieh: estimating demand for a new correspondent banking channel and translating it into transfer volumes, nostro balances, fee income, liquidity carry and net contribution. Simulated data.">
+<link rel="stylesheet" href="../../assets/site.css">
+<style>
+:root{--cUSD:var(--actual);--cEUR:var(--s2);--cGBP:var(--s1);--r2:#6250d6;--r4:#eda100;--cons:var(--s2);--base:var(--actual);--opt:var(--s1)}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){--r2:#9085e9;--r4:#c98500}}
+:root[data-theme="dark"]{--r2:#9085e9;--r4:#c98500}
+.sub2{font-size:clamp(15px,1.8vw,18px);color:var(--accent);font-weight:600;margin:-4px 0 12px}
+.flow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:18px 0 0;padding:0;list-style:none;counter-reset:st}
+.flow .step{position:relative;background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:10px 12px 10px;font-size:12.5px;color:var(--ink-2);box-shadow:var(--shadow);text-decoration:none;display:block}
+.flow .step:hover{border-color:var(--accent);transform:translateY(-2px)}
+.flow .step b{display:block;color:var(--navy);font-size:13px;margin-bottom:2px}
+.flow .step::before{counter-increment:st;content:counter(st);display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--navy);color:var(--surface);font-size:11px;font-weight:700;align-items:center;justify-content:center;margin-bottom:6px}
+.flow li:not(:last-child) .step::after{content:"→";position:absolute;right:-9px;top:50%;transform:translateY(-50%);color:var(--accent);font-weight:700;z-index:1;background:var(--page);border-radius:50%;width:10px;text-align:center;font-size:12px}
+@media (max-width:980px){.flow{grid-template-columns:repeat(3,minmax(0,1fr))}.flow li:nth-child(3) .step::after{display:none}}
+@media (max-width:520px){.flow{grid-template-columns:repeat(2,minmax(0,1fr))}.flow li .step::after{display:none}}
+.sliders{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 18px;margin-top:8px}
+#cpSel{max-width:min(250px,60vw)}
+.sl label{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--ink-2)}
+.sl label b{color:var(--ink);font-variant-numeric:tabular-nums}
+.sl input{width:100%;accent-color:var(--accent);margin:6px 0 0}
+.sl small{color:var(--muted);font-size:11.5px}
+@media (max-width:860px){.sliders{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:440px){.sliders{grid-template-columns:minmax(0,1fr)}}
+.sc td.hl,.sc th.hl{background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
+.cls{width:100%;border-collapse:collapse;font-size:13px}
+.cls th{color:var(--muted);font-weight:500;font-size:12px;text-align:left;padding:6px 8px;border-bottom:1px solid var(--axis)}
+.cls td{padding:8px;border-bottom:1px solid var(--grid);vertical-align:top;color:var(--ink-2)}
+.cls td:first-child{color:var(--ink);font-weight:600;white-space:nowrap}
+.pill{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;border:1px solid currentColor}
+.pill.s{color:var(--accent)}.pill.r{color:var(--good-ink)}.pill.f{color:var(--r2)}.pill.n{color:var(--muted)}
+.meth{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.meth .panel p{color:var(--ink-2);margin:8px 0;font-size:13.5px}
+.meth h3{font-size:13.5px;margin:14px 0 2px;color:var(--navy)}
+.meth ul{margin:6px 0 0;padding-left:18px;color:var(--ink-2);font-size:13.5px}.meth li{margin:4px 0}
+@media (max-width:860px){.meth{grid-template-columns:minmax(0,1fr)}}
+.dlrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.dl2{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ring);background:var(--surface);color:var(--ink);text-decoration:none;font:inherit;font-weight:600;font-size:13px;padding:7px 12px;border-radius:8px;cursor:pointer}
+.dl2:hover{border-color:var(--accent);color:var(--accent)}
+.raw.l3 th:nth-child(3),.raw.l3 td:nth-child(3),.raw.l3 th:nth-child(4),.raw.l3 td:nth-child(4){text-align:left}
+.as{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.as td{padding:5px 8px;border-bottom:1px solid var(--grid);color:var(--ink-2)}
+.as td:last-child{text-align:right;color:var(--ink);white-space:nowrap}
+.as tr.g td{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding-top:12px;border-bottom:0}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="crumb"><a href="../../index.html">Jamal Kanbarieh · Portfolio</a> &nbsp;/&nbsp; <b>Correspondent Channel Demand Model</b></div>
+  <button class="themebtn" id="themeBtn" type="button" aria-label="Toggle dark mode"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg> Theme</button>
+</div></header>
+
+<div class="wrap hero">
+  <a class="backbtn" href="../../index.html">← Back to portfolio</a>
+  <p class="eyebrow">Financial modelling · Correspondent banking · Forecasting</p>
+  <h1>Demand Estimation &amp; Financial Model Methodology</h1>
+  <p class="sub2">Demand Estimation of Utilizing the Bank A – Correspondent Bank B Channel</p>
+  <p class="lede">When a bank opens a new correspondent channel, management needs to know three things before committing liquidity and operations to it: <b>how much payment flow will actually move through it, what that does to the nostro balance, and whether the fees and liquidity carry cover the cost of running it.</b> This case study walks through the model I built to answer those questions: a survey-based demand estimate, weighted by confidence and phased in over a 12-month adoption curve, then carried through the balance sheet and income statement to a net contribution figure. Change the scenario, filter a counterparty or currency, and move the assumption sliders to see every chart recalculate.</p>
+  <ul class="tags"><li>Demand estimation</li><li>12-month driver-based forecast</li><li>Nostro balance projection</li><li>Fee &amp; liquidity-carry modelling</li><li>Scenario &amp; sensitivity analysis</li><li>Correspondent banking</li></ul>
+  <div class="note info" role="note"><span aria-hidden="true">ⓘ</span><div><strong>Simulated data:</strong> every figure on this page is <strong>synthetic</strong>, generated to demonstrate the model. No actual bank results, balances, fees or transaction records are shown, and nothing here should be read as the performance of any institution. The methodology (model structure and formulas) is a reconstruction of work I carried out as a Financial Institutions Analyst.</div></div>
+  <div class="note" role="note"><span aria-hidden="true">⚑</span><div><strong>Confidentiality:</strong> the institutions are anonymised as <strong>Bank A</strong> (the regional correspondent) and <strong>Correspondent Bank B</strong> (its global clearing bank); "the Bank" is the institution doing the modelling. Demand sources are labelled <strong>Counterparty A–H</strong>. No names, BICs, account identifiers or real transaction details appear in the page, its source files or the downloads.</div></div>
+  <ol class="flow" aria-label="Model flow">
+    <li><a class="step" href="#s1"><b>Historical activity</b>24 months of transfers through existing channels</a></li>
+    <li><a class="step" href="#s1"><b>Demand estimation</b>Survey volumes × confidence rating</a></li>
+    <li><a class="step" href="#s1"><b>Utilisation forecast</b>Adoption curve, seasonality, growth</a></li>
+    <li><a class="step" href="#s2"><b>Balance projection</b>Nostro balance vs minimum operating level</a></li>
+    <li><a class="step" href="#s3"><b>Revenue estimation</b>Tiered fees, FX margin, less charges</a></li>
+    <li><a class="step" href="#s3"><b>Net contribution</b>Net fee income + liquidity carry</a></li>
+  </ol>
+</div>
+
+<div class="filters" role="region" aria-label="Filters"><div class="wrap">
+  <div class="fgroup"><span class="flabel">Scenario</span><div class="seg" id="scenSeg"><button type="button" data-v="cons">Conservative</button><button type="button" data-v="base">Base</button><button type="button" data-v="opt">Optimistic</button></div></div>
+  <div class="fgroup"><label class="flabel" for="cpSel">Counterparty</label><select id="cpSel"></select></div>
+  <div class="fgroup"><span class="flabel">Currency</span><div class="seg" id="curSeg"><button type="button" data-v="all">All</button><button type="button" data-v="USD">USD</button><button type="button" data-v="EUR">EUR</button><button type="button" data-v="GBP">GBP</button></div></div>
+  <button class="reset" id="resetBtn" type="button">Reset</button>
+</div></div>
+
+<main class="wrap">
+  <div class="kpis k8" id="kpi1"></div>
+  <div class="kpis k8" id="kpi2"></div>
+  <div class="card insights"><h2 id="insTitle">Key findings</h2><ul id="ins"></ul></div>
+
+  <h2 class="sechead" id="s1">1 · From historical activity to a demand forecast</h2>
+  <p class="secsub">What flows today, what the survey says could flow, and how much of it the model is prepared to believe.</p>
+  <div class="card panel full">
+    <h2>Demand evolution: historical activity and 12-month forecast</h2>
+    <p class="sub" id="demSub"></p>
+    <div class="legend"><span><i class="ln" style="border-color:var(--ink-2)"></i>Historical (existing channels, simulated)</span><span><i class="ln" id="lgScen" style="border-color:var(--base)"></i><span id="lgScenT">Base forecast</span></span><span><i class="sw" style="background:var(--accent);opacity:.18"></i>Conservative–optimistic range</span><span><i class="ln dash" style="border-color:var(--muted)"></i>Steady-state expected demand</span></div>
+    <div class="chart" id="demand"></div>
+    <div class="read"><b>How to read it:</b> the grey line is what the surveyed counterparties already send and receive through existing routes. The forecast starts well below that level because only a fraction of demand migrates in the first months (the adoption curve), then climbs towards the confidence-weighted steady state. The shaded band is the spread between the conservative and optimistic cases, so its width is the forecast uncertainty management is being asked to accept.</div>
+  </div>
+
+  <div class="grid32">
+    <div class="card panel">
+      <h2>Counterparty analysis: stated demand vs what the model accepts</h2>
+      <p class="sub" id="cpSub"></p>
+      <div class="legend"><span><i class="sw" style="background:var(--budget)"></i>Current activity (12-month avg)</span><span><i class="sw" style="background:transparent;border:1.5px solid var(--accent)"></i>Stated in survey</span><span><i class="sw" style="background:var(--actual)"></i>Confidence-weighted</span></div>
+      <div class="chart" id="cpChart"></div>
+      <div class="read"><b>Why it matters:</b> survey respondents tend to overstate. The confidence rating haircuts each estimate, and comparing it with current activity flags where stated demand is far above anything observed (⚑). Those are the estimates to challenge before sizing limits or liquidity.</div>
+    </div>
+    <div class="card panel">
+      <h2>Currency distribution</h2>
+      <p class="sub" id="curSub"></p>
+      <div class="legend"><span><i class="sw" style="background:var(--cUSD)"></i>USD</span><span><i class="sw" style="background:var(--cEUR)"></i>EUR</span><span><i class="sw" style="background:var(--cGBP)"></i>GBP</span></div>
+      <div class="chart" id="curChart"></div>
+      <div class="read" id="curRead"></div>
+    </div>
+  </div>
+
+  <div class="card panel full">
+    <h2>Transaction analysis: transfer count and average ticket</h2>
+    <p class="sub" id="txSub"></p>
+    <div class="legend"><span><i class="sw" style="background:var(--budget)"></i>Transfers, historical</span><span><i class="sw" style="background:var(--actual)"></i>Transfers, forecast</span><span><i class="ln" style="border-color:var(--s2)"></i>Average ticket (right axis)</span></div>
+    <div class="chart" id="txChart"></div>
+    <div class="read"><b>Count and value are different drivers.</b> Per-transfer costs (correspondent charges, SWIFT, operations) scale with the number of transfers, while percentage fees and balances scale with value. A channel dominated by many small tickets can be busy and still unprofitable on fees, which is why the model forecasts both separately.</div>
+  </div>
+
+  <h2 class="sechead" id="s2">2 · Balance projection</h2>
+  <p class="secsub">Transfer value is a flow. The nostro balance is the stock it leaves behind, and it is the balance that earns or costs money.</p>
+  <div class="grid32">
+    <div class="card panel">
+      <h2>Projected nostro balance vs minimum operating balance</h2>
+      <p class="sub" id="balSub"></p>
+      <div class="legend"><span><i class="ln" style="border-color:var(--actual)"></i>Average nostro balance</span><span><i class="ln dash" style="border-color:var(--ink-2)"></i>Minimum operating balance</span><span><i class="sw" style="background:var(--good);opacity:.35"></i>Surplus (placed in Wakala)</span><span><i class="sw" style="background:var(--bad);opacity:.35"></i>Funding requirement</span></div>
+      <div class="chart" id="balChart"></div>
+      <div class="read" id="balRead"></div>
+    </div>
+    <div class="card panel">
+      <h2>Adoption curve by scenario</h2>
+      <p class="sub">Share of steady-state demand expected to materialise in each month after launch</p>
+      <div class="legend"><span><i class="ln" style="border-color:var(--cons)"></i>Conservative</span><span><i class="ln" style="border-color:var(--base)"></i>Base</span><span><i class="ln" style="border-color:var(--opt)"></i>Optimistic</span></div>
+      <div class="chart" id="adoptChart"></div>
+      <div class="read"><b>Assumption:</b> average ticket size is held constant during ramp-up, so adoption scales the number of transfers. The base curve reaches 100% in month 12; the conservative case is still at 85%.</div>
+    </div>
+  </div>
+
+  <h2 class="sechead" id="s3">3 · Revenue and net financial contribution</h2>
+  <p class="secsub">Gross revenue is not contribution. Charges, operating cost and the cost or benefit of liquidity sit between the two.</p>
+  <div class="grid2">
+    <div class="card panel">
+      <h2>Revenue forecast by stream</h2>
+      <p class="sub" id="revSub"></p>
+      <div class="legend"><span><i class="sw" style="background:var(--actual)"></i>Outward transfer fees</span><span><i class="sw" style="background:var(--r2)"></i>Inward transfer fees</span><span><i class="sw" style="background:var(--s1)"></i>FX conversion margin</span><span><i class="sw" style="background:var(--r4)"></i>Net Wakala income</span><span><i class="ln dash" style="border-color:var(--bad)"></i>Total costs</span></div>
+      <div class="chart" id="revChart"></div>
+    </div>
+    <div class="card panel">
+      <h2>Financial contribution bridge (12 months)</h2>
+      <p class="sub" id="wfSub"></p>
+      <div class="legend"><span><i class="sw" style="background:var(--good)"></i>Revenue</span><span><i class="sw" style="background:var(--bad)"></i>Cost</span><span><i class="sw" style="background:var(--navy)"></i>Subtotal / total</span></div>
+      <div class="chart" id="wfChart"></div>
+    </div>
+  </div>
+  <div class="card panel full">
+    <h2>Unit economics by counterparty: net fee contribution (12 months)</h2>
+    <p class="sub" id="ueSub"></p>
+    <div class="chart" id="ueChart"></div>
+    <div class="read" id="ueRead"></div>
+  </div>
+
+  <h2 class="sechead" id="s4">4 · Scenario and sensitivity analysis</h2>
+  <p class="secsub">How far the answer moves when the assumptions do, and which assumptions deserve the most scrutiny.</p>
+  <div class="card panel full">
+    <div class="panelhead"><div><h2>Assumption overrides</h2><p class="sub" id="ovSub">Sliders start at the selected scenario's values. Every chart above and below recalculates.</p></div><button class="reset" id="ovReset" type="button">Reset to scenario defaults</button></div>
+    <div class="sliders" id="sliders"></div>
+  </div>
+  <div class="grid2">
+    <div class="card panel">
+      <h2>Scenario comparison: cumulative net contribution</h2>
+      <p class="sub" id="scSub"></p>
+      <div class="legend"><span><i class="ln" style="border-color:var(--cons)"></i>Conservative</span><span><i class="ln" style="border-color:var(--base)"></i>Base</span><span><i class="ln" style="border-color:var(--opt)"></i>Optimistic</span></div>
+      <div class="chart" id="scenChart"></div>
+      <div class="tablewrap"><table class="sc" id="scenTbl"></table></div>
+    </div>
+    <div class="card panel">
+      <h2>Sensitivity: which driver moves net contribution most?</h2>
+      <p class="sub" id="torSub"></p>
+      <div class="legend"><span><i class="sw" style="background:var(--bad)"></i>Lower contribution</span><span><i class="sw" style="background:var(--good)"></i>Higher contribution</span><span style="color:var(--muted)">Each driver flexed ±20%, others held constant</span></div>
+      <div class="chart" id="torChart"></div>
+      <div class="read" id="torRead"></div>
+    </div>
+  </div>
+
+  <h2 class="sechead" id="s5">5 · Methodology</h2>
+  <p class="secsub">Model architecture, inputs, formulas and limitations.</p>
+  <div class="story">
+    <div class="card"><h3>Business problem</h3><p>A new correspondent route gives the Bank's customers access to international clearing through Bank A and Correspondent Bank B. Before go-live, Treasury and management need a defensible estimate of the flows it will carry, the nostro liquidity it will tie up or release, and its contribution after costs, so they can set funding, staffing and pricing.</p></div>
+    <div class="card"><h3>Approach</h3><p>Demand is estimated bottom-up from a survey of the Bank's business units, each asked for the monthly transfers they expect once the channel is fully available. Estimates are weighted by a confidence rating, benchmarked against current activity, phased in with an adoption curve, and then run through the balance sheet and income statement.</p></div>
+    <div class="card"><h3>Decision use</h3><p>The output gives a monthly view of volumes, balances and contribution under three scenarios. It shows how much liquidity to pre-fund, when surplus balances can be placed, which demand sources pay for themselves, and which assumptions management should validate before relying on the forecast.</p></div>
+  </div>
+  <div class="meth">
+    <div class="card panel">
+      <h2>Model architecture and calculation logic</h2>
+      <h3>A. Historical activity assessment</h3>
+      <p>24 months of transfers through existing channels are profiled by counterparty, currency and direction: transfer count, average ticket and monthly value. Seasonal indices come from the ratio of each month to a fitted log-linear trend, averaged by calendar month and normalised to 1.00.</p>
+      <h3>B. Demand estimation</h3>
+      <div class="fx">Steady-state monthly volume = Expected no. of transfers × Average amount per transfer
+Expected demand = Steady-state monthly volume × Confidence rating</div>
+      <p>The confidence rating is the estimated probability that actual steady-state volume will be at least the level stated: 90% very high, 70% high, 50% moderate, below 50% low. Current activity is the benchmark: where stated demand is more than three times what the counterparty moves today, the estimate is flagged for challenge.</p>
+      <h3>C. Utilisation forecast</h3>
+      <div class="fx">Forecast volume (t) = Expected demand × Adoption factor (t) × Seasonal index (t) × (1 + g)^(t/12)
+Forecast transfers (t) = Expected transfers × Confidence × Adoption factor (t) × Seasonal index (t) × (1 + g)^(t/12)</div>
+      <p>The adoption factor is the share of steady-state demand expected to have migrated by month <i>t</i>. <i>g</i> is annual organic growth. Seasonality and growth are extensions I added for this public version.</p>
+      <h3>D. Balance projection</h3>
+      <div class="fx">Closing balance (t) = Opening (t) + ρ × max(Inward − Outward, 0) + min(Inward − Outward, 0)
+Settlement float (t) = Inward volume (t) × Settlement lag ÷ Days in month
+Average nostro balance (t) = (Opening + Closing) ÷ 2 − Settlement float
+Minimum operating balance (t) = max(Floor, Cover days × Outward volume ÷ Business days)</div>
+      <p>Inward transfers raise both the nostro and amounts due to clients; outward transfers funded from deposits lower both; outward transfers funded from the Bank's own liquidity lower the nostro only. ρ (retention) is the share of net inflows that stays on the nostro instead of being drawn down or repatriated.</p>
+    </div>
+    <div class="card panel">
+      <h2>Income statement and outputs</h2>
+      <h3>E. Revenue estimation</h3>
+      <div class="fx">Gross fee income (t) = Σ Transfers (segment) × max(Minimum fee, Fee rate (direction, ticket tier) × Average amount)
+FX margin (t) = Σ Volume (currency) × Share converted × FX spread
+Correspondent charges (t) = Σ Transfers × (Correspondent charge + Clearing pass-through + SWIFT cost)
+Operating cost (t) = Cost per transfer × Σ Transfers
+Net fee income = Gross fee income + FX margin − Correspondent charges − Operating cost</div>
+      <h3>F. Liquidity carry and net contribution</h3>
+      <div class="fx">Average surplus = max(0, Average nostro balance − Minimum operating balance)
+Investment income = Average surplus × Wakala profit rate × Days ÷ 365
+Net investment income = Investment income − Wakala agency fee
+Funding requirement = max(0, Minimum operating balance − Average nostro balance)
+Funding cost = Funding requirement × Funding rate × Days ÷ 365
+Net liquidity carry = Net investment income − Funding cost
+<b>Net contribution = Net fee income + Net liquidity carry</b></div>
+      <p>Contribution is reported in absolute terms and as a return on the average surplus balance employed, so the channel can be compared with other uses of the same liquidity.</p>
+      <h3>Scenarios and sensitivity</h3>
+      <p>Three scenarios change five levers together: adoption curve, confidence weighting, organic growth, average ticket and balance retention. The tornado chart then flexes one driver at a time by ±20% to isolate its effect.</p>
+      <h3>Limitations</h3>
+      <ul>
+        <li>Survey-based demand is judgemental. The confidence haircut reduces optimism bias but does not remove it.</li>
+        <li>Adoption is a fixed curve applied to all counterparties; in practice it would differ by client type and be recalibrated after launch.</li>
+        <li>Balances are modelled monthly on averages. Intraday and intra-month liquidity peaks, which drive real pre-funding needs, are not captured.</li>
+        <li>Retention is a single parameter standing in for client behaviour that would need to be observed.</li>
+        <li>Fee tiers are applied to average tickets, not to each transfer; no competitive response, pricing change or compliance cost is modelled.</li>
+        <li>All amounts are in USD equivalent at fixed illustrative rates, so FX translation risk is outside the model.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card panel">
+      <h2>Data inputs and what each one is</h2>
+      <p class="sub">The page keeps four kinds of information separate</p>
+      <div class="tablewrap"><table class="cls">
+        <thead><tr><th>Class</th><th>What it covers here</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill n">Actual</span></td><td>None published. Real transaction history, balances, fee schedules and counterparty identities are confidential and are not used anywhere on this page.</td></tr>
+          <tr><td><span class="pill r">Reconstructed</span></td><td>The method: model structure, formulas, the confidence scale and the base adoption curve, rebuilt from the methodology I developed.</td></tr>
+          <tr><td><span class="pill s">Synthetic</span></td><td>All inputs: the 24-month activity history, survey estimates, confidence ratings, fee tiers, charges, rates and balances. Generated with a seeded script (<code>make_data.py</code>) so they are internally consistent and reproducible.</td></tr>
+          <tr><td><span class="pill f">Forecast</span></td><td>All outputs: the 12-month volumes, balances, revenue and contribution computed from the synthetic inputs under each scenario.</td></tr>
+        </tbody></table></div>
+      <h2 style="margin-top:16px">Key assumptions (illustrative)</h2>
+      <div class="tablewrap"><table class="as" id="asTbl"></table></div>
+    </div>
+    <div class="card panel">
+      <h2>Illustrative dataset</h2>
+      <p class="sub">Survey inputs by counterparty, currency and direction · amounts in USD equivalent per month</p>
+      <div class="tablewrap" style="max-height:430px;overflow:auto"><table class="raw l3" id="svTbl"></table></div>
+      <div class="dlrow">
+        <a class="dl2" href="survey_inputs.csv" download>⬇ Survey inputs (.csv)</a>
+        <a class="dl2" href="synthetic_history.csv" download>⬇ Simulated history (.csv)</a>
+        <button class="dl2" id="dlFc" type="button">⬇ Current forecast (.csv)</button>
+      </div>
+      <p class="small" style="margin-top:8px">504 monthly history records · 22 survey lines · every file is labelled as synthetic.</p>
+      <details class="data"><summary>Show the monthly forecast table for the selected scenario</summary><div class="tablewrap"><table class="raw" id="fcTbl"></table></div></details>
+    </div>
+  </div>
+
+  <section class="about">
+    <div class="card panel">
+      <h2>About this case study</h2>
+      <p><b>Background:</b> as a Financial Institutions Analyst in a Treasury &amp; Investment department I built a Correspondent Banking Channel Transaction Demand &amp; Volume Forecasting Model. It forecast monthly transfer demand from branch-level estimates, confidence-weighted assumptions and a 12-month customer adoption curve, with projected impacts on nostro balances, fee income, liquidity carry and net contribution.</p>
+      <p><b>What is shown here:</b> the same method applied to simulated data, with the institutions anonymised. I added the historical benchmark and seasonality, the FX margin stream, the scenario set and the sensitivity analysis so the logic can be explored interactively.</p>
+      <p><b>Skills demonstrated:</b> driver-based forecasting, separating flows from stocks, linking operational volumes to the balance sheet and income statement, unit economics, scenario design and communicating assumptions to non-specialists.</p>
+    </div>
+    <div class="card panel">
+      <h2>Model</h2>
+      <dl>
+        <dt>Structure</dt><dd>8 counterparties · 3 currencies · 2 directions · 22 demand lines · 24 months history · 12 months forecast</dd>
+        <dt>Outputs</dt><dd>Transfer value and count · nostro balance · fee, FX and Wakala income · charges and costs · net contribution</dd>
+        <dt>Implementation</dt><dd>Calculation logic in <code>model.js</code>, data from <code>make_data.py</code>, charts in plain SVG</dd>
+        <dt>Data</dt><dd>Synthetic, for confidentiality</dd>
+      </dl>
+    </div>
+  </section>
+  <a class="backbtn bottom" href="../../index.html">← Back to all projects</a>
+</main>
+<footer><div class="wrap">Financial modelling case study by Jamal Kanbarieh. Simulated data and anonymised institutions; not the results of any bank.</div></footer>
+
+<script src="../../assets/common.js"></script>
+<script src="model.js"></script>
+<script>
+const D = {"meta":{"synthetic":true,"note":"All figures are simulated for illustration. No real bank, counterparty or transaction data is included."},"hist":["Jan Y1","Feb Y1","Mar Y1","Apr Y1","May Y1","Jun Y1","Jul Y1","Aug Y1","Sep Y1","Oct Y1","Nov Y1","Dec Y1","Jan Y2","Feb Y2","Mar Y2","Apr Y2","May Y2","Jun Y2","Jul Y2","Aug Y2","Sep Y2","Oct Y2","Nov Y2","Dec Y2"],"fcst":["Jan Y3","Feb Y3","Mar Y3","Apr Y3","May Y3","Jun Y3","Jul Y3","Aug Y3","Sep Y3","Oct Y3","Nov Y3","Dec Y3"],"cps":[{"id":"A","profile":"Trade payments, large tickets","conf":0.9},{"id":"B","profile":"Inward remittances, small tickets","conf":0.7},{"id":"C","profile":"Corporate flows, EUR-led","conf":0.7},{"id":"D","profile":"Mixed commercial","conf":0.5},{"id":"E","profile":"Small, early-stage","conf":0.4},{"id":"F","profile":"GBP corridor","conf":0.7},{"id":"G","profile":"Export receipts","conf":0.9},{"id":"H","profile":"New relationship, high stated demand","conf":0.5}],"rows":[{"cp":"A","cur":"USD","dir":"Outward","sn":85,"st":90000,"hn":[53,48,53,41,49,60,42,44,44,40,53,64,46,43,63,57,54,57,52,56,65,67,54,52],"hv":[4661900.0,4554300.0,4068900.0,3502900.0,4385800.0,5115600.0,3518200.0,4402800.0,3901500.0,2891500.0,4653900.0,5294000.0,4053000.0,3489800.0,5160800.0,4082100.0,4054200.0,5104100.0,4652000.0,5286900.0,5758200.0,7139600.0,4700000.0,4214300.0]},{"cp":"A","cur":"USD","dir":"Inward","sn":60,"st":75000,"hn":[32,35,29,41,26,42,38,27,36,40,45,32,38,37,44,32,41,35,49,35,44,46,48,42],"hv":[2042100.0,2497500.0,1916400.0,2827500.0,1803000.0,2760700.0,2842900.0,1919400.0,2357100.0,2762700.0,3339200.0,2553800.0,2826600.0,2925100.0,3310200.0,2364300.0,2912300.0,2405800.0,3660100.0,2494000.0,2936600.0,3176300.0,2996500.0,3173600.0]},{"cp":"A","cur":"EUR","dir":"Outward","sn":20,"st":65000,"hn":[10,11,7,6,9,8,8,8,3,12,11,9,14,14,12,12,11,10,13,10,13,11,14,8],"hv":[514500.0,701800.0,423100.0,368900.0,512000.0,433100.0,436700.0,531000.0,191800.0,759800.0,642500.0,579300.0,782900.0,804500.0,688400.0,732300.0,647600.0,509100.0,791800.0,561400.0,843000.0,722000.0,805700.0,434500.0]},{"cp":"B","cur":"USD","dir":"Inward","sn":420,"st":3000,"hn":[198,201,247,219,227,242,224,200,230,252,256,245,211,218,285,247,252,231,246,234,249,273,269,272],"hv":[600200.0,578500.0,755300.0,601400.0,723200.0,608300.0,560100.0,577200.0,660200.0,624600.0,639200.0,661500.0,578900.0,599100.0,848800.0,623500.0,661400.0,648500.0,676500.0,706300.0,692800.0,770800.0,655800.0,777900.0]},{"cp":"B","cur":"EUR","dir":"Inward","sn":150,"st":2400,"hn":[81,84,81,85,76,84,86,61,90,84,71,98,76,80,96,96,72,86,86,88,97,102,83,117],"hv":[187900.0,205900.0,175800.0,169300.0,167300.0,191200.0,170600.0,135300.0,215400.0,176300.0,156600.0,227800.0,178700.0,179300.0,218700.0,226400.0,176700.0,174600.0,195300.0,195100.0,206700.0,225800.0,182200.0,240500.0]},{"cp":"B","cur":"USD","dir":"Outward","sn":45,"st":4500,"hn":[21,29,26,31,30,26,37,23,30,32,33,33,19,29,20,37,27,32,30,26,24,33,30,27],"hv":[73000.0,98800.0,92600.0,118900.0,116300.0,109500.0,144300.0,87700.0,122100.0,134900.0,122600.0,131300.0,69500.0,111400.0,69000.0,162200.0,101800.0,152800.0,125900.0,108500.0,98600.0,140400.0,115100.0,99700.0]},{"cp":"C","cur":"EUR","dir":"Outward","sn":55,"st":120000,"hn":[32,24,39,33,43,28,28,29,32,30,33,28,29,22,41,26,28,32,29,31,28,38,43,36],"hv":[3357200.0,2965400.0,4318300.0,3340900.0,3732600.0,2774500.0,3392600.0,3560300.0,3886300.0,3190900.0,3591700.0,2927900.0,3659500.0,2454200.0,4334700.0,2901300.0,2922400.0,3649300.0,3120000.0,3601100.0,3127800.0,4286500.0,5233000.0,3645500.0]},{"cp":"C","cur":"EUR","dir":"Inward","sn":40,"st":100000,"hn":[19,20,25,20,19,21,20,18,32,31,27,28,23,25,20,28,28,18,22,25,28,31,24,25],"hv":[1505700.0,1864000.0,2275300.0,2012000.0,1976100.0,1727400.0,1877200.0,1520000.0,2614000.0,2900500.0,2298300.0,2978200.0,2412300.0,2370200.0,1972000.0,2832800.0,2807900.0,1588900.0,2004600.0,2539700.0,2749400.0,2771300.0,2516800.0,2722600.0]},{"cp":"C","cur":"USD","dir":"Outward","sn":25,"st":55000,"hn":[20,17,17,14,15,11,14,18,11,19,17,11,14,10,21,16,15,16,20,15,14,15,15,15],"hv":[1052700.0,1009400.0,853300.0,671400.0,761400.0,490100.0,633500.0,1026600.0,534700.0,993500.0,928900.0,519100.0,724300.0,507500.0,954000.0,853900.0,688200.0,777300.0,935100.0,747800.0,633700.0,809700.0,735800.0,575300.0]},{"cp":"D","cur":"USD","dir":"Outward","sn":80,"st":35000,"hn":[38,35,44,45,36,39,47,35,35,49,39,51,51,33,37,39,42,42,41,45,57,42,47,53],"hv":[1107100.0,1077300.0,1305300.0,1276200.0,1171000.0,1008100.0,1388800.0,1178800.0,980400.0,1253800.0,1286300.0,1647900.0,1552000.0,880100.0,1013900.0,1079100.0,1283900.0,1287100.0,1262400.0,1443000.0,1628500.0,1248400.0,1228900.0,1613700.0]},{"cp":"D","cur":"USD","dir":"Inward","sn":85,"st":25000,"hn":[49,34,39,38,51,51,44,35,62,41,49,48,42,46,48,38,52,45,58,33,46,42,50,66],"hv":[1228900.0,713200.0,675600.0,831000.0,1229300.0,1090700.0,1032400.0,667500.0,1181000.0,871500.0,1089000.0,998300.0,893700.0,1125600.0,980600.0,825300.0,970900.0,910400.0,1146000.0,645200.0,1048100.0,970600.0,1028800.0,1441900.0]},{"cp":"D","cur":"GBP","dir":"Outward","sn":12,"st":45000,"hn":[5,7,3,10,4,8,5,4,9,7,6,11,2,7,5,6,4,8,2,9,6,8,5,9],"hv":[209700.0,254900.0,117400.0,398300.0,135500.0,294000.0,194600.0,177800.0,319700.0,237600.0,205500.0,526600.0,85100.0,235700.0,185500.0,212200.0,150800.0,304300.0,77900.0,366800.0,253100.0,354800.0,182300.0,370300.0]},{"cp":"E","cur":"USD","dir":"Inward","sn":60,"st":12000,"hn":[21,18,29,22,18,20,18,14,13,22,21,19,18,19,21,18,15,18,20,18,26,25,22,27],"hv":[195700.0,160500.0,290100.0,205300.0,161100.0,176400.0,164900.0,121700.0,117100.0,185900.0,202800.0,152100.0,159000.0,179200.0,204400.0,144600.0,116900.0,157600.0,184100.0,162500.0,245100.0,252400.0,205800.0,249700.0]},{"cp":"E","cur":"USD","dir":"Outward","sn":35,"st":20000,"hn":[10,15,9,13,9,9,6,7,8,7,8,12,11,7,11,14,16,14,12,7,10,6,12,6],"hv":[155000.0,235000.0,120200.0,170600.0,130000.0,149200.0,83900.0,91500.0,137900.0,98400.0,124900.0,162200.0,151200.0,96800.0,177200.0,226200.0,251700.0,236500.0,169500.0,98400.0,140100.0,81200.0,191200.0,94300.0]},{"cp":"F","cur":"GBP","dir":"Inward","sn":45,"st":20000,"hn":[26,22,31,26,22,30,25,27,25,27,26,33,28,26,31,27,27,32,29,29,41,26,23,35],"hv":[467000.0,363300.0,482200.0,453300.0,358900.0,543500.0,469100.0,539100.0,447600.0,433500.0,481500.0,595300.0,518100.0,420600.0,504200.0,481500.0,434100.0,509000.0,503800.0,590800.0,746100.0,461500.0,463700.0,603300.0]},{"cp":"F","cur":"GBP","dir":"Outward","sn":22,"st":38000,"hn":[13,7,17,16,12,7,13,11,11,14,15,16,12,13,16,14,15,17,7,16,21,10,12,14],"hv":[449100.0,253500.0,588200.0,535000.0,424200.0,257500.0,436200.0,363900.0,375600.0,481500.0,498400.0,561800.0,400400.0,496100.0,514500.0,504000.0,534700.0,594100.0,226900.0,617300.0,686800.0,340100.0,439700.0,529100.0]},{"cp":"F","cur":"USD","dir":"Inward","sn":18,"st":16000,"hn":[10,8,6,5,10,12,12,6,7,11,9,10,8,4,13,14,13,14,8,13,10,12,13,8],"hv":[148600.0,116800.0,91300.0,77900.0,146800.0,183600.0,163300.0,98600.0,103800.0,157500.0,128100.0,140200.0,122300.0,59700.0,203700.0,185700.0,164300.0,229400.0,145500.0,186100.0,159900.0,157300.0,189700.0,126000.0]},{"cp":"G","cur":"USD","dir":"Inward","sn":50,"st":150000,"hn":[28,24,25,27,18,24,30,24,21,29,27,25,26,23,27,29,28,26,21,28,21,30,27,32],"hv":[3438300.0,3776200.0,3182400.0,4036400.0,2503100.0,3280400.0,3961300.0,3247400.0,2662000.0,4335800.0,3859300.0,3192000.0,4087000.0,2968400.0,3803000.0,3788900.0,3367700.0,3694200.0,3200800.0,4280300.0,2789500.0,3972300.0,3726700.0,4793600.0]},{"cp":"G","cur":"EUR","dir":"Inward","sn":16,"st":125000,"hn":[6,9,4,7,7,5,9,12,9,8,12,8,6,8,11,7,10,8,13,9,10,10,12,12],"hv":[773300.0,1133800.0,512000.0,916900.0,781700.0,616900.0,989000.0,1381300.0,1099100.0,890300.0,1489700.0,1009000.0,781900.0,996200.0,1305500.0,899600.0,1090600.0,991800.0,1395200.0,1110400.0,1067300.0,1225300.0,1343600.0,1341300.0]},{"cp":"G","cur":"USD","dir":"Outward","sn":12,"st":60000,"hn":[7,6,7,9,5,5,6,11,4,10,10,6,4,9,7,10,8,12,8,6,3,13,7,12],"hv":[456700.0,376700.0,383300.0,500900.0,276700.0,271900.0,398800.0,699600.0,242600.0,629100.0,606200.0,372500.0,233500.0,484300.0,412400.0,574300.0,503300.0,720300.0,580500.0,320400.0,197600.0,753700.0,409500.0,727700.0]},{"cp":"H","cur":"USD","dir":"Outward","sn":40,"st":60000,"hn":[0,0,0,0,0,0,0,0,0,0,0,0,8,6,9,6,6,4,4,3,8,12,6,8],"hv":[0,0,0,0,0,0,0,0,0,0,0,0,332700.0,263200.0,395600.0,288100.0,296600.0,173900.0,178400.0,125400.0,376900.0,480100.0,290700.0,381000.0]},{"cp":"H","cur":"USD","dir":"Inward","sn":30,"st":40000,"hn":[0,0,0,0,0,0,0,0,0,0,0,0,6,5,2,4,6,0,3,5,11,7,4,8],"hv":[0,0,0,0,0,0,0,0,0,0,0,0,174300.0,149900.0,62700.0,111800.0,176900.0,0.0,102000.0,142300.0,324800.0,183200.0,115700.0,227800.0]}],"A":{"adoption":{"cons":[0.2,0.2,0.3,0.35,0.45,0.55,0.6,0.65,0.7,0.75,0.8,0.85],"base":[0.3,0.3,0.4,0.5,0.6,0.7,0.75,0.8,0.85,0.9,0.95,1.0],"opt":[0.35,0.4,0.5,0.6,0.7,0.8,0.9,0.95,1.0,1.0,1.0,1.0]},"scen":{"cons":{"label":"Conservative","confMult":0.85,"growth":0.0,"ticketMult":0.95,"retention":0.5},"base":{"label":"Base","confMult":1.0,"growth":0.06,"ticketMult":1.0,"retention":0.6},"opt":{"label":"Optimistic","confMult":1.1,"growth":0.12,"ticketMult":1.05,"retention":0.7}},"feeTiers":[{"upTo":25000,"out":0.0035,"in":0.0012},{"upTo":100000,"out":0.0025,"in":0.0008},{"upTo":null,"out":0.0015,"in":0.0005}],"minFee":{"out":20,"in":8},"corrCharge":{"out":12,"in":5},"clearingCharge":{"out":8,"in":0},"swift":1.0,"opsCost":6.0,"fxShare":{"USD":0.15,"EUR":0.4,"GBP":0.45},"fxSpread":0.002,"wakalaRate":0.0425,"agencyFee":0.05,"fundingRate":0.055,"openingBalance":1000000,"minBalanceFloor":500000,"coverDays":3,"businessDays":22,"settleLagDays":1,"days":[31,28,31,30,31,30,31,31,30,31,30,31]}};
+const A = D.A, CP = D.cps, CPN = Object.fromEntries(CP.map(c => [c.id, c])), CURS = ["USD", "EUR", "GBP"], SC = ["cons", "base", "opt"];
+const NH = D.hist.length, state = { scen: "base", cp: "all", cur: "all", ov: {} };
+const usd = (v, d) => compact(v, "$", d), usdS = v => (v > 0 ? "+" : "") + compact(v, "$");
+const tickFmt = t => { const a = Math.abs(t), [dv, sf] = a >= 1e9 ? [1e9, "B"] : a >= 1e6 ? [1e6, "M"] : a >= 1e3 ? [1e3, "K"] : [1, ""]; return (t < 0 ? "−" : "") + "$" + +(a / dv).toFixed(2) + sf; };
+const num = v => Math.round(v).toLocaleString("en-US");
+const sum = a => a.reduce((t, x) => t + x, 0);
+const scenCol = s => `var(--${s})`, scenName = s => A.scen[s].label;
+const filt = () => ({ cps: state.cp === "all" ? null : new Set([state.cp]), cur: state.cur === "all" ? null : state.cur });
+const opts = (s, extra) => Object.assign({ scenario: s }, filt(), s === state.scen ? state.ov : {}, extra || {});
+const inF = r => (state.cp === "all" || r.cp === state.cp) && (state.cur === "all" || r.cur === state.cur);
+const short = l => l.replace(" Y", " '");
+const scopeTxt = () => `${state.cp === "all" ? "all counterparties" : "Counterparty " + state.cp} · ${state.cur === "all" ? "all currencies" : state.cur}`;
+
+function mk(id, H, label) { const box = $(id); box.replaceChildren(); const W = Math.max(300, box.clientWidth); return { svg: el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": label }, box), W, narrow: W < 560 }; }
+function yAxis(svg, ticks, sy, x0, x1, fmt) { for (const t of ticks) { el("line", { x1: x0, x2: x1, y1: sy(t), y2: sy(t), stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, x0 - 8, sy(t), fmt(t), { "text-anchor": "end", "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 11 }); } }
+const lp = pts => pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join("");
+function hoverBand(svg, W, x0, x1, y0, y1, n, fn) {
+  const cross = el("line", { y1: y0, y2: y1, stroke: "var(--ink-2)", opacity: 0 }, svg), hit = el("rect", { x: x0, y: y0, width: x1 - x0, height: y1 - y0, fill: "transparent", style: "cursor:crosshair" }, svg);
+  const mv = e => { const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width, i = Math.max(0, Math.min(n - 1, Math.floor((px - x0) / ((x1 - x0) / n)))), cx = x0 + (x1 - x0) * (i + .5) / n; cross.setAttribute("x1", cx); cross.setAttribute("x2", cx); cross.setAttribute("opacity", .4); showTip(e, ...fn(i)); };
+  hit.addEventListener("pointermove", mv); hit.addEventListener("pointerdown", mv); hit.addEventListener("pointerleave", () => { hideTip(); cross.setAttribute("opacity", 0); });
+}
+function hist() { const rows = D.rows.filter(inF); return { v: D.hist.map((_, i) => sum(rows.map(r => r.hv[i]))), n: D.hist.map((_, i) => sum(rows.map(r => r.hn[i]))), rows }; }
+const last12 = a => sum(a.slice(-12)) / 12;
+
+/* ---------- KPIs & findings ---------- */
+function renderKPIs(R, RS, Hs) {
+  const T = R.T, hAvg = last12(Hs.v), hc = T.stated ? 1 - T.steady / T.stated : 0;
+  const r1 = [
+    { k: "Stated demand (survey)", v: usd(T.stated), s: "per month at steady state, before weighting" },
+    { k: "Expected demand", v: usd(T.steady), s: `confidence-weighted · ${pctP(hc, 0)} haircut on stated` },
+    { k: "Year-1 forecast volume", v: usd(T.vol), s: `${pctP(T.vol / (T.steady * 12), 0)} of a full steady-state year` },
+    { k: "Year-1 transfers", v: num(T.n), s: `average ticket ${usd(T.vol / T.n)}` }];
+  const r2 = [
+    { k: "Net fee income (12m)", v: usd(T.netFee), s: `gross ${usd(T.grossFee + T.fx)} less ${usd(T.charges + T.ops)} costs`, c: T.netFee >= 0 ? "" : "down" },
+    { k: "Net liquidity carry (12m)", v: usd(T.carry), s: T.fundCost > 0 ? `after ${usd(T.fundCost)} funding cost` : "no funding requirement", c: T.carry >= 0 ? "" : "down" },
+    { k: "Net contribution (12m)", v: usd(T.net), s: `range ${usd(RS.cons.T.net)} to ${usd(RS.opt.T.net)}`, c: T.net >= 0 ? "up" : "down" },
+    { k: "Avg surplus nostro balance", v: usd(T.avgSurplus), s: T.ros == null ? "no surplus to place" : `return on surplus employed ${pctP(T.ros, 0)}` }];
+  for (const [id, items] of [["kpi1", r1], ["kpi2", r2]]) $(id).replaceChildren(...items.map(it => h("div", { class: "card kpi" }, h("div", { class: "k", text: it.k }), h("div", { class: "v", text: it.v }), h("div", { class: "s" + (it.c ? " " + it.c : ""), text: it.s }))));
+}
+function cpEcon(R) { const by = {}; R.months.forEach(m => { for (const c in m.byCp) { const x = m.byCp[c], o = by[c] ||= { c, rev: 0, cost: 0, n: 0, vol: 0 }; o.rev += x.feeOut + x.feeIn + x.fx; o.cost += x.corr + x.clearing + x.swift + x.ops; o.n += x.n; o.vol += x.vol; } }); return Object.values(by).map(o => Object.assign(o, { net: o.rev - o.cost })); }
+function renderInsights(R, RS, Hs) {
+  const T = R.T, ul = $("ins"); ul.replaceChildren();
+  $("insTitle").textContent = `Key findings · ${scenName(state.scen)} scenario · ${scopeTxt()}`;
+  const add = (...p) => ul.appendChild(h("li", {}, ...p.map(x => typeof x === "string" ? document.createTextNode(x) : h("b", { text: x.b }))));
+  const hAvg = last12(Hs.v);
+  add("The survey states ", { b: `${usd(T.stated)} a month` }, " of steady-state demand. Confidence weighting reduces that to ", { b: usd(T.steady) }, hAvg ? `, which is ${(T.steady / hAvg).toFixed(1)}× the ${usd(hAvg)} these counterparties currently move through existing channels.` : ".");
+  const last = R.months[11], first = R.months[0];
+  add("Because adoption is gradual, year-1 volume is ", { b: usd(T.vol) }, `, or ${pctP(T.vol / (T.steady * 12), 0)} of a full steady-state year. Monthly volume grows from ${usd(first.vol)} at launch to `, { b: usd(last.vol) }, " in month 12.");
+  const ec = cpEcon(R).sort((a, b) => b.vol - a.vol), tv = sum(ec.map(e => e.vol));
+  if (ec.length > 2) add("Demand is concentrated: ", { b: `Counterparties ${ec[0].c} and ${ec[1].c}` }, ` account for ${pctP((ec[0].vol + ec[1].vol) / tv, 0)} of forecast value, so their survey estimates carry most of the forecast risk.`);
+  const loss = ec.filter(e => e.net < 0);
+  add("Fees do most of the work: net fee income is ", { b: usd(T.netFee) }, " against ", { b: usd(T.carry) }, " of net liquidity carry. ", loss.length ? `${loss.map(e => "Counterparty " + e.c).join(" and ")} ${loss.length > 1 ? "do" : "does"} not cover per-transfer costs on fees alone.` : "Every counterparty in scope covers its per-transfer costs.");
+  const fm = R.months.filter(m => m.fundReq > 0).length;
+  add("The average nostro balance moves from ", { b: usd(first.avgBal) }, " to ", { b: usd(last.avgBal) }, fm ? `. In ${fm} month${fm > 1 ? "s" : ""} it falls below the minimum operating balance, creating a funding requirement.` : " and stays above the minimum operating balance throughout, so no funding requirement arises.");
+  add("Across scenarios, 12-month net contribution ranges from ", { b: usd(RS.cons.T.net) }, " (conservative) to ", { b: usd(RS.opt.T.net) }, " (optimistic), with the base case at ", { b: usd(RS.base.T.net) }, ".");
+}
+
+/* ---------- 1. demand evolution ---------- */
+function renderDemand(R, RS, Hs) {
+  const H = $("demand").clientWidth < 560 ? 280 : 340, { svg, W, narrow } = mk("demand", H, "Historical and forecast monthly transfer value");
+  const left = narrow ? 50 : 62, right = narrow ? 10 : 92, top = 22, bottom = 28, N = NH + 12, x0 = left, x1 = W - right;
+  const sx = i => x0 + (x1 - x0) * (i + .5) / N, fc = s => RS[s].months.map(m => m.vol);
+  const hi = Math.max(...Hs.v, ...fc("opt"), R.T.steady), ticks = niceTicks(0, hi, 4), ymax = ticks[ticks.length - 1], sy = v => top + (H - top - bottom) * (1 - v / ymax);
+  yAxis(svg, ticks, sy, x0, x1, tickFmt);
+  const lab = [...D.hist, ...D.fcst]; lab.forEach((l, i) => { if (i % (narrow ? 6 : 3) === 0) txt(svg, sx(i), H - 8, short(l), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); });
+  const xl = x0 + (x1 - x0) * NH / N; el("rect", { x: xl, y: top, width: x1 - xl, height: H - top - bottom, fill: "var(--accent)", opacity: .04 }, svg);
+  el("line", { x1: xl, x2: xl, y1: top - 8, y2: H - bottom, stroke: "var(--axis)", "stroke-dasharray": "3 3" }, svg); txt(svg, xl + 5, top - 8, narrow ? "Launch →" : "Channel launch · forecast →", { "font-size": 11, fill: "var(--ink-2)", "font-weight": 600 });
+  txt(svg, xl - 5, top - 8, "← history", { "font-size": 11, fill: "var(--muted)", "text-anchor": "end" });
+  // history
+  const hp = Hs.v.map((v, i) => [sx(i), sy(v)]);
+  el("path", { d: lp(hp) + `L${sx(NH - 1)},${sy(0)}L${sx(0)},${sy(0)}Z`, fill: "var(--ink-2)", opacity: .06, class: "fade" }, svg);
+  el("path", { d: lp(hp), fill: "none", stroke: "var(--ink-2)", "stroke-width": 1.75, class: "wipe" }, svg);
+  // range band + scenario lines
+  const c = fc("cons"), o = fc("opt");
+  el("path", { d: lp(o.map((v, i) => [sx(NH + i), sy(v)])) + lp(c.map((v, i) => [sx(NH + i), sy(v)]).reverse()).replace("M", "L") + "Z", fill: "var(--accent)", opacity: .13, class: "fade" }, svg);
+  el("line", { x1: xl, x2: x1, y1: sy(R.T.steady), y2: sy(R.T.steady), stroke: "var(--muted)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
+  for (const s of SC) if (s !== state.scen) el("path", { d: lp(fc(s).map((v, i) => [sx(NH + i), sy(v)])), fill: "none", stroke: scenCol(s), "stroke-width": 1.25, opacity: .7, class: "wipe" }, svg);
+  const f = fc(state.scen), fp = f.map((v, i) => [sx(NH + i), sy(v)]);
+  el("path", { d: lp(fp), fill: "none", stroke: scenCol(state.scen), "stroke-width": 2.75, class: "wipe" }, svg);
+  fp.forEach(p => el("circle", { cx: p[0], cy: p[1], r: 3.2, fill: scenCol(state.scen), stroke: "var(--surface)", "stroke-width": 1.5, class: "pop" }, svg));
+  if (!narrow) { txt(svg, x1 + 8, sy(f[11]), usd(f[11]), { "dominant-baseline": "middle", "font-size": 12, "font-weight": 650, fill: "var(--ink)" }); const ys = sy(R.T.steady); txt(svg, x1 + 8, Math.abs(ys - sy(f[11])) < 14 ? ys - 14 : ys, "Steady " + usd(R.T.steady), { "dominant-baseline": "middle", "font-size": 11, fill: "var(--muted)" }); }
+  hoverBand(svg, W, x0, x1, top, H - bottom, N, i => i < NH ? [`${D.hist[i]} · historical (simulated)`, [{ label: "Transfer value", value: usd(Hs.v[i]), color: css("--ink-2") }, { label: "Transfers", value: num(Hs.n[i]) }, { label: "Average ticket", value: Hs.n[i] ? usd(Hs.v[i] / Hs.n[i]) : "n.m." }]]
+    : (m => [`${m.label} · forecast month ${i - NH + 1}`, [{ label: scenName(state.scen), value: usd(m.vol), color: css("--" + state.scen) }, ...SC.filter(s => s !== state.scen).map(s => ({ label: scenName(s), value: usd(RS[s].months[i - NH].vol), color: css("--" + s) })), { label: "Adoption factor", value: pctP(m.adopt, 0) }, { label: "Seasonal index", value: m.season.toFixed(2) }, { label: "Share of steady state", value: pctP(m.vol / R.T.steady, 0) }]])(R.months[i - NH]));
+  $("lgScen").style.borderColor = scenCol(state.scen); $("lgScenT").textContent = scenName(state.scen) + " forecast";
+  $("demSub").textContent = `Monthly transfer value, USD equivalent · ${scopeTxt()} · history = activity through existing channels · forecast = demand expected through the new channel`;
+}
+
+/* ---------- 2. counterparty analysis ---------- */
+function renderCp(R) {
+  const rowsAll = D.rows.filter(r => state.cur === "all" || r.cur === state.cur), tm = R.P.ticketMult;
+  const list = CP.map(c => { const rs = rowsAll.filter(r => r.cp === c.id), stated = sum(rs.map(r => r.sn * r.st * tm)), cf = R.conf[c.id] ?? Math.min(1, c.conf * R.P.confMult); return { c, hist: sum(rs.map(r => last12(r.hv))), stated, exp: stated * cf, cf }; }).filter(x => x.stated > 0).sort((a, b) => b.exp - a.exp);
+  const rowH = 44, top = 4, bottom = 22, Hh = top + rowH * list.length + bottom, { svg, W, narrow } = mk("cpChart", Hh, "Demand by counterparty");
+  const labelW = narrow ? 34 : 150, valW = narrow ? 86 : 118, max = niceMax(Math.max(...list.map(x => x.stated))), sx = v => labelW + (W - labelW - valW) * v / max;
+  for (let t = 0; t <= 4; t++) { const x = sx(max * t / 4); el("line", { x1: x, x2: x, y1: top, y2: Hh - bottom, stroke: "var(--grid)" }, svg); txt(svg, x, Hh - 6, tickFmt(max * t / 4), { "text-anchor": t ? "middle" : "start", fill: "var(--muted)", "font-size": 11 }); }
+  list.forEach((x, i) => {
+    const y = top + i * rowH + 6, on = state.cp === "all" || state.cp === x.c.id, flag = x.hist > 0 && x.stated / x.hist > 3;
+    const g = el("g", { class: "hit", tabindex: 0, role: "button", opacity: on ? 1 : .4, "aria-label": `Counterparty ${x.c.id}: expected demand ${usd(x.exp)}` }, svg);
+    el("rect", { x: 0, y: y - 6, width: W, height: rowH, fill: state.cp === x.c.id ? "var(--accent)" : "transparent", opacity: state.cp === x.c.id ? .07 : 1 }, g);
+    txt(g, 0, y + 9, narrow ? x.c.id : "Counterparty " + x.c.id, { "dominant-baseline": "middle", fill: "var(--ink)", "font-size": 12.5, "font-weight": 600 });
+    if (!narrow) txt(g, 0, y + 25, x.c.profile.length > 26 ? x.c.profile.slice(0, 25) + "…" : x.c.profile, { "dominant-baseline": "middle", fill: "var(--muted)", "font-size": 10.5 });
+    el("path", { d: rr(labelW, y, sx(x.stated) - labelW, 18, 4), fill: "none", stroke: "var(--accent)", "stroke-width": 1.25, class: "fade" }, g);
+    el("path", { d: rr(labelW, y, sx(x.exp) - labelW, 18, 4), fill: "var(--actual)", class: "mk gx" }, g);
+    el("path", { d: rr(labelW, y + 21, sx(x.hist) - labelW, 8, 3), fill: "var(--budget)", class: "mk gx" }, g);
+    txt(g, W, y + 9, `${usd(x.exp)}${flag ? " ⚑" : ""}`, { "text-anchor": "end", "dominant-baseline": "middle", "font-size": 12, "font-weight": 650, fill: "var(--ink)" });
+    txt(g, W, y + 25, `conf. ${pctP(x.cf, 0)} · ${x.hist ? (x.exp / x.hist).toFixed(1) + "× now" : "new"}`, { "text-anchor": "end", "dominant-baseline": "middle", "font-size": 10.5, fill: "var(--muted)" });
+    bindTip(g, () => [`Counterparty ${x.c.id} · ${x.c.profile}`, [{ label: "Current activity (12m avg)", value: usd(x.hist), color: css("--budget") }, { label: "Stated steady state", value: usd(x.stated) }, { label: "Confidence rating", value: pctP(x.cf, 0) }, { label: "Expected demand", value: usd(x.exp), color: css("--actual") }, { label: "Stated ÷ current", value: x.hist ? (x.stated / x.hist).toFixed(1) + "×" + (flag ? " ⚑ challenge" : "") : "n.m." }]]);
+    onActivate(g, () => { state.cp = state.cp === x.c.id ? "all" : x.c.id; render(); });
+  });
+  $("cpSub").textContent = `Monthly value at steady state, USD equivalent · ${state.cur === "all" ? "all currencies" : state.cur} · click a counterparty to filter the whole page · ⚑ = stated demand more than 3× current activity`;
+}
+
+/* ---------- 3. currency mix ---------- */
+function renderCur(R) {
+  const rs = D.rows.filter(r => state.cp === "all" || r.cp === state.cp), Ra = CorrModel.run(D, opts(state.scen, { cur: null }));
+  const bars = [["History · value", c => sum(rs.filter(r => r.cur === c).map(r => sum(r.hv)))], ["Forecast · value", c => sum(Ra.months.map(m => (m.byCur[c] || {}).vol || 0))], ["Forecast · transfers", c => sum(Ra.months.map(m => (m.byCur[c] || {}).n || 0))], ["Forecast · FX margin", c => sum(Ra.months.map(m => (m.byCur[c] || {}).fx || 0))]];
+  const rowH = 52, Hh = bars.length * rowH + 4, { svg, W } = mk("curChart", Hh, "Currency distribution");
+  const shares = [];
+  bars.forEach(([lab, fn], i) => {
+    const vals = CURS.map(fn), tot = sum(vals) || 1, y = i * rowH + 18; let x = 0; txt(svg, 0, y - 6, lab, { "font-size": 12, fill: "var(--ink-2)" }); shares.push(vals.map(v => v / tot));
+    CURS.forEach((c, j) => {
+      const w = W * vals[j] / tot; if (w <= 0) return; const on = state.cur === "all" || state.cur === c;
+      const g = el("g", { class: "hit", tabindex: 0, role: "button", opacity: on ? 1 : .35, "aria-label": `${lab}, ${c}: ${pctP(vals[j] / tot, 0)}` }, svg);
+      el("rect", { x: x + (j ? 1.5 : 0), y, width: Math.max(0, w - (j ? 1.5 : 0)), height: 22, rx: 3, fill: `var(--c${c})`, class: "mk gx" }, g);
+      if (w > 44) txt(g, x + w / 2, y + 11.5, `${c} ${pctP(vals[j] / tot, 0)}`, { "text-anchor": "middle", "dominant-baseline": "middle", fill: "#fff", "font-size": 11.5, "font-weight": 650, "pointer-events": "none" });
+      bindTip(g, () => [`${lab} · ${c}`, [{ label: "Share", value: pctP(vals[j] / tot, 1), color: css("--c" + c) }, { label: i === 2 ? "Transfers" : "Amount", value: i === 2 ? num(vals[j]) : usd(vals[j]) }]]);
+      onActivate(g, () => { state.cur = state.cur === c ? "all" : c; render(); }); x += w;
+    });
+  });
+  $("curSub").textContent = `${state.cp === "all" ? "All counterparties" : "Counterparty " + state.cp} · history = 24 months, forecast = 12 months · click a segment to filter`;
+  const s = shares; $("curRead").replaceChildren(h("b", { text: "Reading the mix: " }), document.createTextNode(`USD is ${pctP(s[1][0], 0)} of forecast value but ${pctP(s[3][0], 0)} of FX margin, because a smaller share of USD transfers needs conversion (${pctP(A.fxShare.USD, 0)} vs ${pctP(A.fxShare.EUR, 0)} for EUR and ${pctP(A.fxShare.GBP, 0)} for GBP). Value share and transfer-count share differ wherever ticket sizes differ by currency.`));
+}
+
+/* ---------- 4. transactions ---------- */
+function renderTx(R, Hs) {
+  const H = 300, { svg, W, narrow } = mk("txChart", H, "Monthly transfer count and average ticket");
+  const left = narrow ? 44 : 56, right = narrow ? 44 : 60, top = 14, bottom = 28, N = NH + 12, x0 = left, x1 = W - right, sx = i => x0 + (x1 - x0) * (i + .5) / N;
+  const n = [...Hs.n, ...R.months.map(m => m.n)], tk = [...Hs.v.map((v, i) => Hs.n[i] ? v / Hs.n[i] : null), ...R.months.map(m => m.n ? m.vol / m.n : null)];
+  const t1 = niceTicks(0, Math.max(...n), 4), m1 = t1[t1.length - 1], sy = v => top + (H - top - bottom) * (1 - v / m1);
+  const tv = tk.filter(v => v != null), t2 = niceTicks(Math.min(...tv) * .9, Math.max(...tv) * 1.05, 4), a2 = t2[0], b2 = t2[t2.length - 1], sy2 = v => top + (H - top - bottom) * (1 - (v - a2) / (b2 - a2));
+  yAxis(svg, t1, sy, x0, x1, t => num(t));
+  t2.forEach(t => txt(svg, x1 + 8, sy2(t), tickFmt(t), { "dominant-baseline": "middle", fill: "var(--s2)", "font-size": 11 }));
+  [...D.hist, ...D.fcst].forEach((l, i) => { if (i % (narrow ? 6 : 3) === 0) txt(svg, sx(i), H - 8, short(l), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); });
+  const xl = x0 + (x1 - x0) * NH / N; el("line", { x1: xl, x2: xl, y1: top - 6, y2: H - bottom, stroke: "var(--axis)", "stroke-dasharray": "3 3" }, svg); txt(svg, xl + 5, top - 2, "Launch", { "font-size": 11, fill: "var(--ink-2)", "font-weight": 600 });
+  const bw = Math.max(2, (x1 - x0) / N * .66);
+  n.forEach((v, i) => el("path", { d: rt(sx(i) - bw / 2, sy(v), bw, sy(0) - sy(v), 2), fill: i < NH ? "var(--budget)" : "var(--actual)", class: "gy", style: `animation-delay:${i * 8}ms` }, svg));
+  let d = "", pen = false; tk.forEach((v, i) => { if (v == null) { pen = false; return; } d += (pen ? "L" : "M") + sx(i).toFixed(1) + "," + sy2(v).toFixed(1); pen = true; });
+  el("path", { d, fill: "none", stroke: "var(--s2)", "stroke-width": 2, class: "wipe" }, svg);
+  hoverBand(svg, W, x0, x1, top, H - bottom, N, i => [`${[...D.hist, ...D.fcst][i]} · ${i < NH ? "historical (simulated)" : scenName(state.scen) + " forecast"}`, [{ label: "Transfers", value: num(n[i]), color: css(i < NH ? "--budget" : "--actual") }, { label: "Average ticket", value: tk[i] == null ? "n.m." : usd(tk[i]), color: css("--s2") }, { label: "Transfer value", value: usd(i < NH ? Hs.v[i] : R.months[i - NH].vol) }, ...(i >= NH ? [{ label: "Inward / outward", value: `${num(R.months[i - NH].inN)} / ${num(R.months[i - NH].outN)}` }] : [])]]);
+  $("txSub").textContent = `${scopeTxt()} · columns = number of transfers (left axis) · line = average amount per transfer (right axis, not starting at zero)`;
+}
+
+/* ---------- 5. balance ---------- */
+function renderBal(R, RS) {
+  const H = 320, { svg, W, narrow } = mk("balChart", H, "Projected nostro balance"), left = narrow ? 50 : 60, right = narrow ? 10 : 84, top = 14, bottom = 28, x0 = left, x1 = W - right;
+  const M = R.months, sx = i => x0 + (x1 - x0) * (i + .5) / 12, hi = Math.max(...SC.flatMap(s => RS[s].months.map(m => m.avgBal)), ...M.map(m => m.minBal));
+  const ticks = niceTicks(0, hi, 4), ym = ticks[ticks.length - 1], sy = v => top + (H - top - bottom) * (1 - v / ym);
+  yAxis(svg, ticks, sy, x0, x1, tickFmt); M.forEach((m, i) => { if (!narrow || i % 2 === 0) txt(svg, sx(i), H - 8, narrow ? "M" + (i + 1) : short(m.label), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); });
+  for (let i = 0; i < 11; i++) { // surplus / funding shading, split where the lines cross
+    const a0 = M[i].avgBal - M[i].minBal, a1 = M[i + 1].avgBal - M[i + 1].minBal, p = (j, k) => `${sx(j)},${sy(M[j][k])}`;
+    if (a0 * a1 >= 0) el("polygon", { points: `${p(i, "avgBal")} ${p(i + 1, "avgBal")} ${p(i + 1, "minBal")} ${p(i, "minBal")}`, fill: (a0 + a1) >= 0 ? "var(--good)" : "var(--bad)", opacity: .2, class: "fade" }, svg);
+    else { const t = a0 / (a0 - a1), xc = sx(i) + t * (sx(i + 1) - sx(i)), yc = sy(M[i].avgBal + t * (M[i + 1].avgBal - M[i].avgBal)); el("polygon", { points: `${p(i, "avgBal")} ${xc},${yc} ${p(i, "minBal")}`, fill: a0 >= 0 ? "var(--good)" : "var(--bad)", opacity: .2, class: "fade" }, svg); el("polygon", { points: `${xc},${yc} ${p(i + 1, "avgBal")} ${p(i + 1, "minBal")}`, fill: a1 >= 0 ? "var(--good)" : "var(--bad)", opacity: .2, class: "fade" }, svg); }
+  }
+  for (const s of SC) if (s !== state.scen) el("path", { d: lp(RS[s].months.map((m, i) => [sx(i), sy(m.avgBal)])), fill: "none", stroke: scenCol(s), "stroke-width": 1.2, opacity: .55, class: "wipe" }, svg);
+  el("path", { d: lp(M.map((m, i) => [sx(i), sy(m.minBal)])), fill: "none", stroke: "var(--ink-2)", "stroke-width": 1.75, "stroke-dasharray": "5 4" }, svg);
+  el("path", { d: lp(M.map((m, i) => [sx(i), sy(m.avgBal)])), fill: "none", stroke: "var(--actual)", "stroke-width": 2.75, class: "wipe" }, svg);
+  M.forEach((m, i) => el("circle", { cx: sx(i), cy: sy(m.avgBal), r: 3.2, fill: "var(--actual)", stroke: "var(--surface)", "stroke-width": 1.5, class: "pop" }, svg));
+  if (!narrow) { txt(svg, x1 + 6, sy(M[11].avgBal), "Avg " + usd(M[11].avgBal), { "dominant-baseline": "middle", "font-size": 12, "font-weight": 650, fill: "var(--ink)" }); txt(svg, x1 + 6, sy(M[11].minBal) + (Math.abs(sy(M[11].minBal) - sy(M[11].avgBal)) < 14 ? 14 : 0), "Min " + usd(M[11].minBal), { "dominant-baseline": "middle", "font-size": 11, fill: "var(--ink-2)" }); }
+  hoverBand(svg, W, x0, x1, top, H - bottom, 12, i => { const m = M[i]; return [`${m.label} · month ${i + 1}`, [{ label: "Opening balance", value: usd(m.open) }, { label: "Inward transfers", value: "+" + usd(m.inV), cls: "up" }, { label: "Outward transfers", value: "−" + usd(m.outV), cls: "down" }, { label: "Closing balance", value: usd(m.close) }, { label: "Settlement float", value: "−" + usd(m.float) }, { label: "Average balance", value: usd(m.avgBal), color: css("--actual") }, { label: "Minimum operating", value: usd(m.minBal), color: css("--ink-2"), dash: true }, m.fundReq > 0 ? { label: "Funding requirement", value: usd(m.fundReq), cls: "down" } : { label: "Surplus placed", value: usd(m.surplus), cls: "up" }, { label: "Net liquidity carry", value: usdS(m.carry) }]]; });
+  const fm = M.filter(m => m.fundReq > 0).length;
+  $("balSub").textContent = `${scenName(state.scen)} scenario · ${scopeTxt()} · thin lines = other scenarios · retention ${pctP(R.P.retention, 0)} of net inflows`;
+  $("balRead").replaceChildren(h("b", { text: "What it shows: " }), document.createTextNode(`Inward transfers exceed outward transfers in this dataset, so the balance builds as adoption rises. The minimum operating balance also rises, because it is sized to ${A.coverDays} business days of outward payments. ` + (fm ? `In ${fm} month${fm > 1 ? "s" : ""} the balance sits below that minimum (red), so the Bank would have to pre-fund the account at a cost. ` : "The gap between the two lines (green) is surplus liquidity Treasury can place in Wakala. ") + `Over the year the surplus averages ${usd(R.T.avgSurplus)}.`));
+}
+function renderAdopt() {
+  const H = 320, { svg, W } = mk("adoptChart", H, "Adoption curves"), left = 40, right = 40, top = 14, bottom = 28, x0 = left, x1 = W - right, sx = i => x0 + (x1 - x0) * (i + .5) / 12, sy = v => top + (H - top - bottom) * (1 - v);
+  yAxis(svg, [0, .25, .5, .75, 1], sy, x0, x1, t => (t * 100) + "%"); for (let i = 0; i < 12; i += 1) if (i % 2 === 0 || W > 420) txt(svg, sx(i), H - 8, "M" + (i + 1), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 });
+  for (const s of SC) { const on = s === state.scen, a = A.adoption[s]; el("path", { d: lp(a.map((v, i) => [sx(i), sy(v)])), fill: "none", stroke: scenCol(s), "stroke-width": on ? 2.75 : 1.5, opacity: on ? 1 : .7, class: "wipe" }, svg); if (on) a.forEach((v, i) => el("circle", { cx: sx(i), cy: sy(v), r: 3, fill: scenCol(s), stroke: "var(--surface)", "stroke-width": 1.5, class: "pop" }, svg)); txt(svg, x1 + 4, sy(a[11]) + (s === "base" && a[11] === A.adoption.opt[11] ? 13 : 0), pctP(a[11], 0), { "dominant-baseline": "middle", "font-size": 11.5, fill: scenCol(s), "font-weight": on ? 700 : 500 }); }
+  hoverBand(svg, W, x0, x1, top, H - bottom, 12, i => [`Month ${i + 1} after launch`, SC.map(s => ({ label: scenName(s), value: pctP(A.adoption[s][i], 0), color: css("--" + s) }))]);
+}
+
+/* ---------- 6. revenue ---------- */
+function renderRev(R) {
+  const H = 320, { svg, W, narrow } = mk("revChart", H, "Revenue forecast by stream"), left = narrow ? 44 : 54, right = 8, top = 14, bottom = 28, x0 = left, x1 = W - right, M = R.months, sx = i => x0 + (x1 - x0) * (i + .5) / 12;
+  const parts = [["feeOut", "--actual", "Outward fees"], ["feeIn", "--r2", "Inward fees"], ["fx", "--s1", "FX margin"], ["netInv", "--r4", "Net Wakala income"]], cost = m => m.charges + m.ops + m.fundCost, rev = m => sum(parts.map(p => m[p[0]]));
+  const ticks = niceTicks(0, Math.max(...M.map(rev)), 4), ym = ticks[ticks.length - 1], sy = v => top + (H - top - bottom) * (1 - v / ym), bw = Math.min(34, (x1 - x0) / 12 * .64);
+  yAxis(svg, ticks, sy, x0, x1, tickFmt);
+  M.forEach((m, i) => { if (!narrow || i % 2 === 0) txt(svg, sx(i), H - 8, narrow ? "M" + (i + 1) : short(m.label), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); let acc = 0; const g = el("g", { class: "gy", style: `animation-delay:${i * 28}ms` }, svg); parts.forEach(([k, c], j) => { const v = m[k]; if (v <= 0) return; const ya = sy(acc + v), yb = sy(acc); el("rect", { x: sx(i) - bw / 2, y: ya, width: bw, height: Math.max(0, yb - ya - (j ? 1 : 0)), fill: `var(${c})`, rx: 1.5 }, g); acc += v; }); });
+  el("path", { d: lp(M.map((m, i) => [sx(i), sy(cost(m))])), fill: "none", stroke: "var(--bad)", "stroke-width": 2, "stroke-dasharray": "5 4" }, svg);
+  M.forEach((m, i) => el("circle", { cx: sx(i), cy: sy(cost(m)), r: 2.6, fill: "var(--bad)", class: "pop" }, svg));
+  hoverBand(svg, W, x0, x1, top, H - bottom, 12, i => { const m = M[i]; return [`${m.label} · month ${i + 1}`, [...parts.map(([k, c, l]) => ({ label: l, value: usd(m[k]), color: css(c) })), { label: "Total revenue", value: usd(rev(m)) }, { label: "Charges + operating cost", value: "−" + usd(m.charges + m.ops), color: css("--bad"), dash: true }, ...(m.fundCost > 0 ? [{ label: "Funding cost", value: "−" + usd(m.fundCost) }] : []), { label: "Net contribution", value: usdS(m.net), cls: m.net >= 0 ? "up" : "down" }]]; });
+  $("revSub").textContent = `${scenName(state.scen)} · ${scopeTxt()} · stacked monthly revenue; the gap above the dashed cost line is net contribution`;
+}
+
+/* ---------- 7. contribution bridge ---------- */
+function renderWf(R) {
+  const T = R.T, steps = [{ l: "Outward transfer fees", s: "Outward fees", v: T.feeOut }, { l: "Inward transfer fees", s: "Inward fees", v: T.feeIn }, { l: "FX conversion margin", s: "FX margin", v: T.fx }, { l: "Correspondent & clearing charges", s: "Corr. charges", v: -(T.corr + T.clearing) }, { l: "SWIFT messaging", s: "SWIFT", v: -T.swift }, { l: "Operating cost allocation", s: "Ops cost", v: -T.ops }, { l: "Net fee income", s: "Net fee income", total: true }, { l: "Net Wakala income", s: "Wakala income", v: T.netInv }, { l: "Funding cost", s: "Funding cost", v: -T.fundCost }, { l: "Net contribution", s: "Net contribution", total: true }];
+  let run = 0; steps.forEach(s => { if (s.total) { s.v = run; s.a = 0; s.b = run; } else { s.a = run; run += s.v; s.b = run; } });
+  const rowH = 29, top = 4, bottom = 22, Hh = top + rowH * steps.length + bottom, { svg, W, narrow } = mk("wfChart", Hh, "Contribution bridge"), labelW = narrow ? 104 : 210, valW = 76;
+  const lo = Math.min(0, ...steps.map(s => Math.min(s.a, s.b))), hi = Math.max(...steps.map(s => Math.max(s.a, s.b))), ticks = niceTicks(lo, hi, narrow ? 2 : 4).filter(t => t <= hi * 1.001 && t >= lo), a = Math.min(lo, ticks[0]), b = hi, sx = v => labelW + (W - labelW - valW) * (v - a) / (b - a);
+  for (const t of ticks) { el("line", { x1: sx(t), x2: sx(t), y1: top, y2: Hh - bottom, stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, sx(t), Hh - 6, tickFmt(t), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  steps.forEach((s, i) => {
+    const y = top + i * rowH + 5, bh = rowH - 11, xa = sx(Math.min(s.a, s.b)), xb = sx(Math.max(s.a, s.b)), up = s.v >= 0;
+    const g = el("g", { class: "hit", tabindex: 0, "aria-label": `${s.l}: ${usd(s.v)}` }, svg); el("rect", { x: 0, y: y - 5, width: W, height: rowH, fill: s.total ? "var(--accent)" : "transparent", opacity: s.total ? .06 : 1 }, g);
+    txt(g, 0, y + bh / 2, narrow ? s.s : s.l, { "dominant-baseline": "middle", "font-size": 12, fill: "var(--ink)", "font-weight": s.total ? 700 : 400 });
+    el("rect", { x: xa, y, width: Math.max(1.5, xb - xa), height: bh, rx: 3, fill: s.total ? "var(--navy)" : up ? "var(--good)" : "var(--bad)", class: "mk " + (up || s.total ? "gx" : "gxr"), style: `animation-delay:${i * 45}ms` }, g);
+    if (i < steps.length - 1) el("line", { x1: sx(s.b), x2: sx(s.b), y1: y + bh, y2: y + rowH, stroke: "var(--axis)", "stroke-dasharray": "2 2" }, svg);
+    txt(g, xb + 6, y + bh / 2, s.total ? usd(s.v) : Math.abs(s.v) < .5 ? "$0" : (up ? "+" : "") + usd(s.v), { "dominant-baseline": "middle", "font-size": 11.5, "font-weight": s.total ? 700 : 500, fill: s.total ? "var(--ink)" : Math.abs(s.v) < .5 ? "var(--muted)" : up ? "var(--good-ink)" : "var(--bad-ink)" });
+    bindTip(g, () => [s.l, [{ label: "12-month amount", value: usd(s.v), cls: s.total ? "" : up ? "up" : "down" }, { label: "Share of gross revenue", value: pctP(Math.abs(s.v) / (T.grossFee + T.fx + T.netInv), 0) }, ...(s.total ? [] : [{ label: "Running total", value: usd(s.b) }])]]);
+  });
+  $("wfSub").textContent = `${scenName(state.scen)} · ${scopeTxt()} · from gross fee income to net contribution; costs take ${pctP((T.charges + T.ops + T.fundCost) / (T.grossFee + T.fx + T.netInv), 0)} of gross revenue`;
+}
+
+/* ---------- unit economics ---------- */
+function renderUe() {
+  const Ra = CorrModel.run(D, opts(state.scen, { cps: null })), list = cpEcon(Ra).sort((a, b) => b.net - a.net);
+  const rowH = 30, top = 4, bottom = 22, Hh = top + rowH * list.length + bottom, { svg, W, narrow } = mk("ueChart", Hh, "Net fee contribution by counterparty"), labelW = narrow ? 30 : 130, valW = narrow ? 150 : 300;
+  const ticks = niceTicks(Math.min(0, ...list.map(x => x.net)), Math.max(...list.map(x => x.net)), narrow ? 2 : 4), a = ticks[0], b = ticks[ticks.length - 1], sx = v => labelW + (W - labelW - valW) * (v - a) / (b - a);
+  for (const t of ticks) { el("line", { x1: sx(t), x2: sx(t), y1: top, y2: Hh - bottom, stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, sx(t), Hh - 6, tickFmt(t), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  list.forEach((x, i) => {
+    const y = top + i * rowH + 5, bh = rowH - 11, on = state.cp === "all" || state.cp === x.c, per = x.net / x.n;
+    const g = el("g", { class: "hit", tabindex: 0, role: "button", opacity: on ? 1 : .4, "aria-label": `Counterparty ${x.c}: net fee contribution ${usd(x.net)}` }, svg); el("rect", { x: 0, y: y - 5, width: W, height: rowH, fill: "transparent" }, g);
+    txt(g, 0, y + bh / 2, narrow ? x.c : "Counterparty " + x.c, { "dominant-baseline": "middle", "font-size": 12, fill: "var(--ink)", "font-weight": 600 });
+    el("path", { d: x.net >= 0 ? rr(sx(0), y, sx(x.net) - sx(0), bh, 3) : rl(sx(x.net), y, sx(0) - sx(x.net), bh, 3), fill: x.net >= 0 ? "var(--actual)" : "var(--bad)", class: "mk " + (x.net >= 0 ? "gx" : "gxr") }, g);
+    txt(g, W, y + bh / 2, `${usdS(x.net)} · ${per >= 0 ? "+" : "−"}$${Math.abs(per).toFixed(1)}${narrow ? "/tx" : "/transfer · avg ticket " + usd(x.vol / x.n)}`, { "text-anchor": "end", "dominant-baseline": "middle", "font-size": 11.5, fill: x.net >= 0 ? "var(--ink)" : "var(--bad-ink)", "font-weight": 600 });
+    bindTip(g, () => [`Counterparty ${x.c} · ${CPN[x.c].profile}`, [{ label: "Fees + FX margin", value: usd(x.rev), cls: "up" }, { label: "Charges + operating cost", value: "−" + usd(x.cost), cls: "down" }, { label: "Net fee contribution", value: usdS(x.net) }, { label: "Transfers (12m)", value: num(x.n) }, { label: "Average ticket", value: usd(x.vol / x.n) }, { label: "Net per transfer", value: (per >= 0 ? "+$" : "−$") + Math.abs(per).toFixed(2) }, { label: "Net margin on value", value: (x.net / x.vol * 1e4).toFixed(1) + " bps" }]]);
+    onActivate(g, () => { state.cp = state.cp === x.c ? "all" : x.c; render(); });
+  });
+  const neg = list.filter(x => x.net < 0), best = list[0];
+  $("ueSub").textContent = `${scenName(state.scen)} · ${state.cur === "all" ? "all currencies" : state.cur} · fees and FX margin less per-transfer charges and operating cost (before liquidity carry) · click to filter`;
+  $("ueRead").replaceChildren(h("b", { text: "Business implication: " }), document.createTextNode((neg.length ? `${neg.map(x => "Counterparty " + x.c).join(" and ")} lose${neg.length > 1 ? "" : "s"} money on every transfer: small tickets earn only the minimum fee, which is below the ${"$" + (A.corrCharge.in + A.swift + A.opsCost).toFixed(0)}–${"$" + (A.corrCharge.out + A.clearingCharge.out + A.swift + A.opsCost).toFixed(0)} unit cost. Options are a higher minimum fee, a cheaper processing route, or accepting the loss for the balances these flows bring. ` : "Every counterparty covers its unit costs in this view. ") + `Counterparty ${best.c} contributes most, driven by large tickets where percentage fees far exceed fixed per-transfer costs.`));
+}
+
+/* ---------- 8. scenarios ---------- */
+function renderScen(RS) {
+  const H = 250, { svg, W, narrow } = mk("scenChart", H, "Cumulative net contribution by scenario"), left = narrow ? 48 : 56, right = narrow ? 12 : 78, top = 12, bottom = 26, x0 = left, x1 = W - right, sx = i => x0 + (x1 - x0) * (i + .5) / 12;
+  const all = SC.flatMap(s => RS[s].months.map(m => m.cumNet)), ticks = niceTicks(Math.min(0, ...all), Math.max(...all), 4), a = ticks[0], b = ticks[ticks.length - 1], sy = v => top + (H - top - bottom) * (1 - (v - a) / (b - a));
+  yAxis(svg, ticks, sy, x0, x1, tickFmt); for (let i = 0; i < 12; i++) if (i % 2 === 0 || !narrow) txt(svg, sx(i), H - 8, "M" + (i + 1), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 });
+  for (const s of SC) { const on = s === state.scen, M = RS[s].months; el("path", { d: lp(M.map((m, i) => [sx(i), sy(m.cumNet)])), fill: "none", stroke: scenCol(s), "stroke-width": on ? 3 : 1.75, opacity: on ? 1 : .8, class: "wipe" }, svg); el("circle", { cx: sx(11), cy: sy(M[11].cumNet), r: on ? 4 : 3, fill: scenCol(s), stroke: "var(--surface)", "stroke-width": 1.5, class: "pop" }, svg); if (!narrow) txt(svg, x1 + 4, sy(M[11].cumNet), usd(M[11].cumNet), { "dominant-baseline": "middle", "font-size": 12, fill: scenCol(s), "font-weight": on ? 700 : 600 }); }
+  hoverBand(svg, W, x0, x1, top, H - bottom, 12, i => [`Cumulative to month ${i + 1}`, SC.map(s => ({ label: scenName(s), value: usd(RS[s].months[i].cumNet), color: css("--" + s) }))]);
+  const rows = [["Expected demand / month", s => usd(RS[s].T.steady)], ["Year-1 volume", s => usd(RS[s].T.vol)], ["Year-1 transfers", s => num(RS[s].T.n)], ["Net fee income", s => usd(RS[s].T.netFee)], ["Net liquidity carry", s => usd(RS[s].T.carry)], ["Net contribution", s => usd(RS[s].T.net)], ["vs base", s => s === "base" ? "—" : pctS(RS[s].T.net / RS.base.T.net - 1, 0)], ["Avg surplus balance", s => usd(RS[s].T.avgSurplus)], ["Month-12 adoption", s => pctP(RS[s].adopt[11], 0)]];
+  const t = $("scenTbl"); t.replaceChildren(h("thead", {}, h("tr", {}, h("th", { text: "12-month outcome" }), ...SC.map(s => h("th", { class: s === state.scen ? "hl" : "", text: scenName(s) })))));
+  const tb = h("tbody"); rows.forEach(([l, fn]) => tb.appendChild(h("tr", {}, h("td", { text: l }), ...SC.map(s => h("td", { class: s === state.scen ? "hl" : "", text: fn(s) }))))); t.appendChild(tb);
+  $("scSub").textContent = `${scopeTxt()} · scenarios change adoption, confidence weighting, growth, ticket size and retention together${Object.keys(state.ov).length ? " · " + scenName(state.scen) + " includes your slider overrides" : ""}`;
+}
+const DRV = [["adopt", "Adoption pace"], ["conf", "Confidence weighting"], ["ticket", "Average ticket size"], ["fee", "Fee rates & minimums"], ["charge", "Correspondent charges"], ["ops", "Operating cost / transfer"], ["fx", "FX spread"], ["wakala", "Wakala profit rate"], ["retention", "Balance retention"]];
+function renderTor(R) {
+  const base = R.T.net, list = DRV.map(([k, l]) => ({ k, l, lo: CorrModel.run(D, opts(state.scen, { k: { [k]: .8 } })).T.net - base, hi: CorrModel.run(D, opts(state.scen, { k: { [k]: 1.2 } })).T.net - base })).sort((a, b) => Math.max(Math.abs(b.lo), Math.abs(b.hi)) - Math.max(Math.abs(a.lo), Math.abs(a.hi)));
+  const rowH = 30, top = 18, bottom = 22, Hh = top + rowH * list.length + bottom, { svg, W, narrow } = mk("torChart", Hh, "Sensitivity of net contribution"), labelW = narrow ? 112 : 170, pad = 56;
+  const lim = niceMax(Math.max(...list.flatMap(x => [Math.abs(x.lo), Math.abs(x.hi)]))) || 1, cx = labelW + (W - labelW) / 2, half = (W - labelW) / 2 - pad, sx = v => cx + half * v / lim;
+  for (const t of [-lim, -lim / 2, 0, lim / 2, lim]) { el("line", { x1: sx(t), x2: sx(t), y1: top, y2: Hh - bottom, stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, sx(t), Hh - 6, (t > 0 ? "+" : "") + tickFmt(t), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  txt(svg, cx, 10, `Change in 12-month net contribution vs ${usd(base)}`, { "text-anchor": "middle", "font-size": 11, fill: "var(--muted)" });
+  list.forEach((x, i) => {
+    const y = top + i * rowH + 5, bh = rowH - 11, g = el("g", { class: "hit", tabindex: 0, "aria-label": `${x.l}: ${usdS(x.lo)} to ${usdS(x.hi)}` }, svg); el("rect", { x: 0, y: y - 5, width: W, height: rowH, fill: "transparent" }, g);
+    txt(g, 0, y + bh / 2, x.l, { "dominant-baseline": "middle", "font-size": 12, fill: "var(--ink)" });
+    for (const [v, tag] of [[x.lo, "−20%"], [x.hi, "+20%"]]) { if (Math.abs(v) < 1) continue; const pos = v > 0; el("path", { d: pos ? rr(cx, y, sx(v) - cx, bh, 3) : rl(sx(v), y, cx - sx(v), bh, 3), fill: pos ? "var(--good)" : "var(--bad)", opacity: .88, class: "mk " + (pos ? "gx" : "gxr") }, g); txt(g, sx(v) + (pos ? 5 : -5), y + bh / 2, tag, { "text-anchor": pos ? "start" : "end", "dominant-baseline": "middle", "font-size": 10.5, fill: "var(--muted)" }); }
+    bindTip(g, () => [x.l, [{ label: "Driver −20%", value: usdS(x.lo), cls: x.lo >= 0 ? "up" : "down" }, { label: "Driver +20%", value: usdS(x.hi), cls: x.hi >= 0 ? "up" : "down" }, { label: "Swing", value: usd(Math.abs(x.hi - x.lo)) }, { label: "As % of base", value: pctP(Math.abs(x.hi - x.lo) / Math.abs(base), 0) }]]);
+  });
+  const a = list[0], b = list[1], z = list[list.length - 1];
+  $("torSub").textContent = `${scenName(state.scen)} · ${scopeTxt()} · bars show the change in net contribution when one driver is 20% lower or higher`;
+  $("torRead").replaceChildren(h("b", { text: "Where to focus validation: " }), document.createTextNode(`${a.l} and ${b.l.toLowerCase()} move the result most (swings of ${usd(Math.abs(a.hi - a.lo))} and ${usd(Math.abs(b.hi - b.lo))}), so these are the assumptions to test hardest before launch. ${z.l} barely matters at this scale (${usd(Math.abs(z.hi - z.lo))}). Drivers that scale volume (adoption, confidence, ticket) dominate because both fee income and balances depend on them.`));
+}
+
+/* ---------- sliders, tables, downloads ---------- */
+const SL = [["confMult", "Confidence weighting", .6, 1.2, .05, v => pctP(v, 0), "multiplier on each rating, capped at 100%"], ["growth", "Annual organic growth", 0, .2, .01, v => pctP(v, 0), "applied on top of the adoption curve"], ["retention", "Balance retention", .2, 1, .05, v => pctP(v, 0), "share of net inflows left on the nostro"], ["wakalaRate", "Wakala profit rate", .01, .08, .0025, v => pctP(v, 2), "yield on surplus balances"]];
+const slDefault = k => k === "wakalaRate" ? A.wakalaRate : A.scen[state.scen][k];
+function buildSliders() { $("sliders").replaceChildren(...SL.map(([k, l, mn, mx, st, f, note]) => { const out = h("b", { id: "so_" + k }), inp = h("input", { type: "range", min: mn, max: mx, step: st, id: "sl_" + k, "aria-label": l }); inp.addEventListener("input", () => { state.ov[k] = +inp.value; if (Math.abs(state.ov[k] - slDefault(k)) < 1e-9) delete state.ov[k]; render(); }); return h("div", { class: "sl" }, h("label", { for: "sl_" + k }, document.createTextNode(l), out), inp, h("small", { text: note })); })); }
+function syncSliders() { SL.forEach(([k, , , , , f]) => { const v = state.ov[k] ?? slDefault(k); $("sl_" + k).value = v; $("so_" + k).textContent = f(v) + (k in state.ov ? " ✎" : ""); }); }
+function buildStatic() {
+  const t = $("asTbl"), g = (l) => h("tr", { class: "g" }, h("td", { colspan: 2, text: l })), r = (l, v) => h("tr", {}, h("td", { text: l }), h("td", { text: v }));
+  const tiers = A.feeTiers.map((x, i) => r(`Ticket ${i === 0 ? "below " + usd(x.upTo, 0) : x.upTo ? usd(A.feeTiers[i - 1].upTo, 0) + " – " + usd(x.upTo, 0) : usd(A.feeTiers[i - 1].upTo, 0) + " and above"}`, `out ${pctP(x.out, 2)} · in ${pctP(x.in, 2)}`));
+  t.replaceChildren(h("tbody", {}, g("Fee schedule"), ...tiers, r("Minimum fee per transfer", `out $${A.minFee.out} · in $${A.minFee.in}`),
+    g("Costs per transfer"), r("Correspondent charge", `out $${A.corrCharge.out} · in $${A.corrCharge.in}`), r("Clearing-bank pass-through", `out $${A.clearingCharge.out} · in $${A.clearingCharge.in}`), r("SWIFT messaging", "$" + A.swift.toFixed(2)), r("Operating cost allocation", "$" + A.opsCost.toFixed(2)),
+    g("FX"), r("Share of volume converted", CURS.map(c => `${c} ${pctP(A.fxShare[c], 0)}`).join(" · ")), r("FX spread earned", (A.fxSpread * 1e4).toFixed(0) + " bps"),
+    g("Liquidity"), r("Opening nostro balance", usd(A.openingBalance)), r("Minimum operating balance", `${A.coverDays} business days of outward volume, floor ${usd(A.minBalanceFloor)}`), r("Settlement lag on inward funds", A.settleLagDays + " day"), r("Wakala profit rate / agency fee", `${pctP(A.wakalaRate, 2)} · ${pctP(A.agencyFee, 0)} of income`), r("Funding rate on shortfalls", pctP(A.fundingRate, 2)),
+    g("Scenarios (conservative · base · optimistic)"), r("Confidence multiplier", SC.map(s => A.scen[s].confMult.toFixed(2) + "×").join(" · ")), r("Annual organic growth", SC.map(s => pctP(A.scen[s].growth, 0)).join(" · ")), r("Average ticket vs survey", SC.map(s => pctS(A.scen[s].ticketMult - 1, 0)).join(" · ")), r("Balance retention", SC.map(s => pctP(A.scen[s].retention, 0)).join(" · ")), r("Month-12 adoption", SC.map(s => pctP(A.adoption[s][11], 0)).join(" · "))));
+  const sv = $("svTbl"); sv.replaceChildren(h("thead", {}, h("tr", {}, ...["Counterparty", "Profile", "Ccy", "Direction", "Transfers", "Avg amount", "Steady state", "Confidence", "Expected demand", "Current (12m avg)"].map(x => h("th", { text: x })))));
+  sv.appendChild(h("tbody", {}, ...D.rows.map(r => h("tr", {}, h("td", { text: "Counterparty " + r.cp }), h("td", { text: CPN[r.cp].profile }), h("td", { text: r.cur }), h("td", { text: r.dir }), h("td", { text: num(r.sn) }), h("td", { text: "$" + num(r.st) }), h("td", { text: "$" + num(r.sn * r.st) }), h("td", { text: pctP(CPN[r.cp].conf, 0) }), h("td", { text: "$" + num(r.sn * r.st * CPN[r.cp].conf) }), h("td", { text: "$" + num(last12(r.hv)) })))));
+}
+const FC = [["Month", m => m.label], ["Adoption", m => pctP(m.adopt, 0)], ["Seasonal index", m => m.season.toFixed(3)], ["Inward volume", m => m.inV], ["Outward volume", m => m.outV], ["Transfers", m => m.n], ["Avg nostro balance", m => m.avgBal], ["Min operating balance", m => m.minBal], ["Surplus", m => m.surplus], ["Funding requirement", m => m.fundReq], ["Gross fee income", m => m.grossFee], ["FX margin", m => m.fx], ["Correspondent charges", m => m.charges], ["Operating cost", m => m.ops], ["Net fee income", m => m.netFee], ["Net liquidity carry", m => m.carry], ["Net contribution", m => m.net]];
+function renderFc(R) { const t = $("fcTbl"); t.replaceChildren(h("thead", {}, h("tr", {}, ...FC.map(c => h("th", { text: c[0] })))), h("tbody", {}, ...R.months.map(m => h("tr", {}, ...FC.map(c => { const v = c[1](m); return h("td", { text: typeof v === "number" ? num(v) : v }); }))))); }
+function download(R) { const lines = [["data_class", "scenario", "scope", ...FC.map(c => c[0].toLowerCase().replace(/ /g, "_"))].join(","), ...R.months.map(m => ["Forecast from synthetic inputs", scenName(state.scen), `"${scopeTxt()}"`, ...FC.map(c => { const v = c[1](m); return typeof v === "number" ? Math.round(v) : v; })].join(","))]; const a = h("a", { href: URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" })), download: `forecast_${state.scen}.csv` }); document.body.appendChild(a); a.click(); a.remove(); }
+
+let LAST;
+function render() {
+  const avail = new Set(D.rows.filter(r => state.cp === "all" || r.cp === state.cp).map(r => r.cur)); if (state.cur !== "all" && !avail.has(state.cur)) state.cur = "all";
+  $("curSeg").querySelectorAll("button").forEach(b => b.disabled = b.dataset.v !== "all" && !avail.has(b.dataset.v));
+  segSync("scenSeg", state.scen); segSync("curSeg", state.cur); $("cpSel").value = state.cp; syncSliders();
+  const RS = Object.fromEntries(SC.map(s => [s, CorrModel.run(D, opts(s))])), R = RS[state.scen], Hs = hist(); LAST = R;
+  renderKPIs(R, RS, Hs); renderInsights(R, RS, Hs); renderDemand(R, RS, Hs); renderCp(R); renderCur(R); renderTx(R, Hs); renderBal(R, RS); renderAdopt(); renderRev(R); renderWf(R); renderUe(); renderScen(RS); renderTor(R); renderFc(R);
+}
+function build() {
+  const cs = $("cpSel"); cs.appendChild(h("option", { value: "all", text: "All counterparties" })); CP.forEach(c => cs.appendChild(h("option", { value: c.id, text: `Counterparty ${c.id} · ${c.profile}` })));
+  cs.onchange = () => { state.cp = cs.value; render(); };
+  segBind("scenSeg", null, v => { state.scen = v; state.ov = {}; }, render); segBind("curSeg", null, v => state.cur = v, render);
+  $("resetBtn").onclick = () => { state.scen = "base"; state.cp = "all"; state.cur = "all"; state.ov = {}; render(); };
+  $("ovReset").onclick = () => { state.ov = {}; render(); }; $("dlFc").onclick = () => download(LAST);
+  buildSliders(); buildStatic(); initTheme(render);
+}
+build(); render(); onResize(render);
+</script>
+<script src="../../assets/motion.js"></script>
+</body>
+</html>

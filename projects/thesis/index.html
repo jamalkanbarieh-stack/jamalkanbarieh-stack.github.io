@@ -60,10 +60,10 @@
 
   <div class="grid2">
     <div class="card panel">
-      <div class="panelhead"><div><h2>Regression results</h2><p class="sub">Standardised coefficients (β), pooled OLS, n = 36</p></div>
+      <div class="panelhead"><div><h2>Regression results</h2><p class="sub">Standardised coefficients (β) with 95% confidence intervals, pooled OLS, n = 36</p></div>
         <div class="seg" id="modelSeg"><button type="button" data-v="ROAA_ADJ">Adj. ROAA</button><button type="button" data-v="ROAE_ADJ">Adj. ROAE</button><button type="button" data-v="NFIM">NFIM</button></div></div>
       <div class="fit" id="fit"></div>
-      <div class="legend"><span><i class="sw" style="background:var(--actual)"></i>Significant (p &lt; .05)</span><span><i class="sw" style="background:var(--budget)"></i>Not significant</span></div>
+      <div class="legend"><span><i class="sw" style="background:var(--actual)"></i>Significant (p &lt; .05)</span><span><i class="sw" style="background:var(--budget)"></i>Not significant</span><span><i class="ln" style="border-color:var(--ink)"></i>95% confidence interval</span></div>
       <div class="chart" id="coef"></div>
       <div class="mnote" id="mnote"></div>
       <details class="data"><summary>Show the coefficient table</summary><div class="tablewrap"><table class="raw" id="coefTbl"></table></div></details>
@@ -73,6 +73,14 @@
       <p class="sub">Click a hypothesis to explore its variable below</p>
       <div class="tablewrap"><table class="hyp" id="hyp"></table></div>
     </div>
+  </div>
+
+  <div class="card panel full">
+    <h2>Coefficient map: the three models side by side</h2>
+    <p class="sub">Standardised β for each predictor in each model · ★ = significant at 5% · click a cell to open that model and variable</p>
+    <div class="tablewrap"><table class="hm" id="cmap"></table></div>
+    <div class="scale"><span>Negative effect</span><i></i><span>Positive effect</span></div>
+    <div class="read" id="cmapRead"></div>
   </div>
 
   <div class="card panel full" id="explore">
@@ -100,6 +108,20 @@
     </div>
   </div>
 
+  <h2 class="sechead">How to read the evidence</h2>
+  <div class="story">
+    <div class="card"><h3>Research problem</h3><p>Portfolio theory says diversification should improve risk-adjusted returns. Syrian Islamic banks operate with few Sharia-compliant instruments, sanctions-restricted correspondent access and a depreciating currency, so it is an open question whether spreading exposures across instruments, currencies, sectors and geographies actually shows up in profitability, or whether cost control and asset quality matter more.</p></div>
+    <div class="card"><h3>Measures and method</h3><ul>
+      <li><b>HHI</b> = Σ (exposure share)². It runs from 1 ÷ n (evenly spread) to 1 (fully concentrated), so a higher HHI means <i>less</i> diversification.</li>
+      <li><b>Adjusted ROAA / ROAE</b> strip unrealised structural-FX revaluation from income and equity.</li>
+      <li><b>Pooled OLS</b> on 36 bank-years; β is standardised, so coefficients are comparable across predictors.</li>
+      <li>The <b>95% interval</b> is β ± t(28 df) × standard error. An interval crossing zero means the sign itself is uncertain.</li></ul></div>
+    <div class="card"><h3>What a manager can take from it</h3><ul>
+      <li>The dependable lever is <b>cost efficiency</b>: it is significant, large and consistent across banks.</li>
+      <li>Diversification is <b>not reliably rewarded</b> in this sample. That is a finding about measurable effect, not proof that concentration is safe.</li>
+      <li>With 36 observations and 7 predictors, wide intervals are expected. Results are evidence to weigh, not parameters to plan on.</li></ul></div>
+  </div>
+
   <h2 style="margin:28px 0 0;font-size:18px;color:var(--navy)">Recommendations</h2>
   <div class="recs">
     <div class="card panel"><h3>For Islamic banks</h3><ul>
@@ -120,7 +142,7 @@
       <h2>About this research</h2>
       <p><b>Research question:</b> Does income and asset diversification improve the profitability of Islamic banks operating in Syria's high-inflation, sanctions-constrained environment?</p>
       <p><b>Method:</b> Variables were built from audited financial statements: four HHI concentration indices (portfolio composition, currency, sector, geography), the Stage 3 financing ratio, the adjusted cost-to-income ratio and an Islamic-sector competition HHI. These were regressed on three profitability measures (adjusted ROAA, adjusted ROAE and the net financing and investment margin) using pooled OLS in SPSS. The Power BI model then turned the results into a navigable evidence base, with star-schema fact tables for ratios, exposures, portfolio components and regression output.</p>
-      <p><b>What this view adds:</b> a relationship explorer for any predictor/outcome pair, with pooled and within-bank correlations; calendar or study-year alignment; and the underlying exposure mix behind each HHI.</p>
+      <p><b>What this view adds:</b> confidence intervals on every coefficient, a cross-model coefficient map, a relationship explorer for any predictor/outcome pair with pooled and within-bank correlations, calendar or study-year alignment, and the underlying exposure mix behind each HHI.</p>
     </div>
     <div class="card panel">
       <h2>Model</h2>
@@ -183,16 +205,18 @@ function renderCoef() {
   const box = $("coef"); box.replaceChildren();
   const W = Math.max(300, box.clientWidth), narrow = W < 520, labelW = narrow ? 104 : 150, valW = 92, rowH = 30, top = 4, bottom = 22, H = top + rows.length * rowH + bottom;
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Standardised regression coefficients" }, box);
-  const lim = Math.max(1, ...rows.map(r => Math.abs(r.Beta))), sx = v => labelW + (W - labelW - valW) * (v + lim) / (2 * lim);
-  for (const t of [-1, -.5, 0, .5, 1]) { el("line", { x1: sx(t), x2: sx(t), y1: top, y2: H - bottom, stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, sx(t), H - 6, t.toFixed(1).replace("-", "−"), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
+  const TC = 2.048, ci = r => TC * r.StdError * Math.abs(r.Beta / r.B); // t(.975, 28 df); CI rescaled to the standardised coefficient
+  const lim = Math.ceil(Math.max(1, ...rows.map(r => Math.abs(r.Beta) + ci(r))) * 2) / 2, sx = v => labelW + (W - labelW - valW) * (v + lim) / (2 * lim);
+  for (const t of [-lim, -lim / 2, 0, lim / 2, lim]) { el("line", { x1: sx(t), x2: sx(t), y1: top, y2: H - bottom, stroke: t === 0 ? "var(--axis)" : "var(--grid)" }, svg); txt(svg, sx(t), H - 6, String(+t.toFixed(2)).replace("-", "−"), { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); }
   rows.forEach((r, i) => {
     const y = top + i * rowH + 6, bh = rowH - 12, a = sx(0), b = sx(r.Beta), sig = r.IsSignificant05;
     const v = V[r.PredictorKey], g = el("g", { class: "hit", tabindex: 0, role: "button", "aria-label": `${v.VariableShortName}: beta ${r.Beta.toFixed(3)}, p ${r.Sig_Display}` }, svg);
     el("rect", { x: 0, y: y - 6, width: W, height: rowH, fill: "transparent" }, g);
     txt(g, 0, y + bh / 2, v.VariableShortName, { "dominant-baseline": "middle", fill: sig ? "var(--ink)" : "var(--ink-2)", "font-weight": sig ? 650 : 400 });
-    el("path", { d: r.Beta >= 0 ? rr(a, y, b - a, bh, 3) : rl(b, y, a - b, bh, 3), fill: sig ? "var(--actual)" : "var(--budget)", class: "mk" }, g);
+    el("path", { d: r.Beta >= 0 ? rr(a, y, b - a, bh, 3) : rl(b, y, a - b, bh, 3), fill: sig ? "var(--actual)" : "var(--budget)", class: "mk " + (r.Beta >= 0 ? "gx" : "gxr"), style: `animation-delay:${i * 40}ms` }, g);
+    const c0 = sx(r.Beta - ci(r)), c1 = sx(r.Beta + ci(r)), cy = y + bh / 2; el("path", { d: `M${c0},${cy}H${c1}M${c0},${cy - 4}v8M${c1},${cy - 4}v8`, stroke: "var(--ink)", "stroke-width": 1.4, fill: "none", opacity: .8, class: "fade" }, g);
     txt(g, W, y + bh / 2, `${r.Beta.toFixed(2).replace("-", "−")}  p ${r.Sig_Display}${sig ? " ★" : ""}`, { "text-anchor": "end", "dominant-baseline": "middle", "font-size": 12, fill: sig ? "var(--ink)" : "var(--muted)", "font-weight": sig ? 650 : 400 });
-    bindTip(g, () => [`${v.VariableName} → ${V[state.model].VariableShortName}`, [{ label: "β (standardised)", value: r.Beta.toFixed(3) }, { label: "B (unstandardised)", value: r.B.toFixed(4) }, { label: "Std. error", value: r.StdError.toFixed(4) }, { label: "t", value: r.t.toFixed(2) }, { label: "p", value: r.Sig_Display, cls: sig ? "up" : "" }, { label: "Expected sign", value: v.ExpectedSign || "—" }]]);
+    bindTip(g, () => [`${v.VariableName} → ${V[state.model].VariableShortName}`, [{ label: "β (standardised)", value: r.Beta.toFixed(3) }, { label: "B (unstandardised)", value: r.B.toFixed(4) }, { label: "Std. error", value: r.StdError.toFixed(4) }, { label: "t", value: r.t.toFixed(2) }, { label: "p", value: r.Sig_Display, cls: sig ? "up" : "" }, { label: "95% CI (β)", value: `${(r.Beta - ci(r)).toFixed(2).replace("-", "−")} to ${(r.Beta + ci(r)).toFixed(2).replace("-", "−")}` }, { label: "Expected sign", value: v.ExpectedSign || "—" }]]);
     onActivate(g, () => { state.v = r.PredictorKey; state.x = r.PredictorKey; state.y = state.model; render(); $("explore").scrollIntoView({ behavior: "smooth", block: "start" }); });
   });
   const sigs = rows.filter(r => r.IsSignificant05), dv = V[state.model].VariableShortName;
@@ -205,6 +229,23 @@ function renderCoef() {
   t.appendChild(tb);
 }
 
+function mixc(a, b, t) { const pa = a.match(/\w\w/g).map(x => parseInt(x, 16)), pb = b.match(/\w\w/g).map(x => parseInt(x, 16)); return "#" + pa.map((v, i) => Math.round(v + (pb[i] - v) * t).toString(16).padStart(2, "0")).join(""); }
+function renderMap() {
+  const t = $("cmap"); t.replaceChildren(); const mid = css("--div-mid"), pos = css("--div-pos"), neg = css("--div-neg");
+  const preds = D.coef.filter(c => c.ModelKey === "ROAA_ADJ" && !c.IsConstant).map(c => c.PredictorKey);
+  t.appendChild(h("thead", {}, h("tr", {}, h("th", { class: "row", text: "Predictor" }), ...D.models.map(m => h("th", { text: `${V[m.ModelKey].VariableShortName} · R² ${m.RSquare.toFixed(2)}` })), h("th", { text: "Sign across models" }))));
+  const tb = h("tbody"); let nsig = 0; const same = [];
+  for (const k of preds) {
+    const tr = h("tr", {}, h("th", { class: "row", text: V[k].VariableShortName })), cs = D.models.map(m => D.coef.find(c => c.ModelKey === m.ModelKey && c.PredictorKey === k));
+    cs.forEach(c => { const q = Math.min(1, Math.abs(c.Beta) / .8), td = h("td", { tabindex: 0, text: c.Beta.toFixed(2).replace("-", "−") + (c.IsSignificant05 ? " ★" : ""), "aria-label": `${V[k].VariableShortName} in ${c.ModelKey}: beta ${c.Beta.toFixed(2)}, p ${c.Sig_Display}` }); td.style.background = mixc(mid, c.Beta >= 0 ? pos : neg, q * .85); td.style.color = q > .6 ? "#fff" : "var(--ink)"; if (c.IsSignificant05) { td.style.fontWeight = 700; nsig++; } if (c.ModelKey === state.model && k === state.v) td.classList.add("sel");
+      bindTip(td, () => [`${V[k].VariableName} → ${V[c.ModelKey].VariableShortName}`, [{ label: "β", value: c.Beta.toFixed(3) }, { label: "t", value: c.t.toFixed(2) }, { label: "p", value: c.Sig_Display, cls: c.IsSignificant05 ? "up" : "" }]]);
+      onActivate(td, () => { state.model = c.ModelKey; state.y = c.ModelKey; state.v = k; state.x = k; hideTip(); render(); }); tr.appendChild(td); });
+    const sg = cs.map(c => Math.sign(c.Beta)), cons = sg.every(s => s === sg[0]); if (cons) same.push(V[k].VariableShortName);
+    const td = h("td", { class: "na", text: cons ? (sg[0] > 0 ? "all positive" : "all negative") : "mixed" }); td.style.cursor = "default"; tr.appendChild(td); tb.appendChild(tr);
+  }
+  t.appendChild(tb);
+  $("cmapRead").replaceChildren(h("b", { text: "Pattern: " }), document.createTextNode(`Only ${nsig} of ${preds.length * D.models.length} coefficients are significant at 5%. ${same.length} of ${preds.length} predictors keep the same sign in all three models (${same.join(", ")}); the rest change direction depending on how profitability is measured, which is why the study treats most diversification effects as inconclusive.`));
+}
 function statusOf(o) {
   if (/^Supported/.test(o)) return ["ok", "●", "Supported"];
   if (/Directionally/.test(o)) return ["dir", "◐", "Directionally consistent"];
@@ -243,7 +284,7 @@ function renderLine() {
   xs.forEach((x, i) => { if (narrow && i % 2) return; txt(svg, sx(x), H - 8, state.axis === "cal" ? String(x) : "Y" + x, { "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }); });
   for (const b of BANKS) {
     const s = pts.filter(p => p.b === b).sort((a, c) => a.x - c.x);
-    el("path", { d: s.map((p, i) => `${i ? "L" : "M"}${sx(p.x)},${sy(p.y)}`).join(""), fill: "none", stroke: BC[b], "stroke-width": 2.25 }, svg);
+    el("path", { d: s.map((p, i) => `${i ? "L" : "M"}${sx(p.x)},${sy(p.y)}`).join(""), fill: "none", stroke: BC[b], "stroke-width": 2.25, class: "wipe" }, svg);
     s.forEach(p => el("circle", { cx: sx(p.x), cy: sy(p.y), r: 3, fill: BC[b], stroke: "var(--surface)", "stroke-width": 1.5 }, svg));
     if (!narrow && s.length) { const l = s[s.length - 1]; txt(svg, sx(l.x) + 7, sy(l.y), b, { "dominant-baseline": "middle", "font-size": 11.5, fill: "var(--ink-2)", "font-weight": 600 }); }
   }
@@ -278,7 +319,7 @@ function renderScatter() {
   pts.forEach(p => {
     const g = el("g", { class: "hit", tabindex: 0, "aria-label": `${p.o.bank} ${p.o.year}` }, svg);
     el("circle", { cx: sx(p.x), cy: sy(p.y), r: 11, fill: "transparent" }, g);
-    el("circle", { cx: sx(p.x), cy: sy(p.y), r: 5, fill: BC[p.o.bank], stroke: "var(--surface)", "stroke-width": 1.5, class: "mk" }, g);
+    el("circle", { cx: sx(p.x), cy: sy(p.y), r: 5, fill: BC[p.o.bank], stroke: "var(--surface)", "stroke-width": 1.5, class: "mk pop" }, g);
     bindTip(g, () => [`${BN[p.o.bank]} · ${p.o.year}`, [{ label: V[X].VariableShortName, value: fmtV(X, p.x) }, { label: V[Y].VariableShortName, value: fmtV(Y, p.y) }]]);
   });
   const r = corr(xa, ya), within = BANKS.map(b => { const s = pts.filter(p => p.o.bank === b); return `${b} ${(corr(s.map(p => p.x), s.map(p => p.y)) ?? 0).toFixed(2).replace("-", "−")}`; });
@@ -307,7 +348,7 @@ function renderMix() {
     const m = D.div[T][o.k] || {}, cx = left + slot * i + slot / 2; let acc = 0;
     const named = top.filter(c => c !== "Other").map(c => m[c] || 0), tot = Object.values(m).reduce((a, b) => a + b, 0);
     const vals = top.map((c, j) => c === "Other" ? Math.max(0, tot - named.reduce((a, b) => a + b, 0)) : named[j]);
-    const g = el("g", { class: "hit", tabindex: 0, "aria-label": `${b} ${o.year}` }, svg);
+    const g = el("g", { class: "hit gy", tabindex: 0, "aria-label": `${b} ${o.year}`, style: `animation-delay:${i * 25}ms` }, svg);
     el("rect", { x: cx - slot / 2, y: topP, width: slot, height: H - topP - bottom, fill: "transparent" }, g);
     vals.forEach((v, j) => { if (v <= 0) return; const y0 = sy(acc + v), y1 = sy(acc); el("rect", { x: cx - bw / 2, y: y0, width: bw, height: Math.max(0, y1 - y0 - 1.5), fill: col(j), class: "mk" }, g); acc += v; });
     const hhi = D.ratio["HHI_" + T][o.k];
@@ -333,8 +374,9 @@ function build() {
   bankLegend("bankLegend"); bankLegend("bankLegend2");
   initTheme(render);
 }
-function render() { renderCoef(); renderHyp(); renderLine(); renderScatter(); renderMix(); }
+function render() { renderCoef(); renderMap(); renderHyp(); renderLine(); renderScatter(); renderMix(); }
 kpis(); build(); render(); onResize(render);
 </script>
+<script src="../../assets/motion.js"></script>
 </body>
 </html>

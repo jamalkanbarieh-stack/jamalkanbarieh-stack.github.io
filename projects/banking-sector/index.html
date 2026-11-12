@@ -31,7 +31,7 @@
   <a class="backbtn" href="../../index.html">← Back to portfolio</a>
   <p class="eyebrow">Credit &amp; Financial Institutions Analysis · Power BI</p>
   <h1>Syrian Banking Sector Peer Analysis</h1>
-  <p class="lede">A quarterly benchmark of Syria's listed private banks covering size, profitability, efficiency, asset quality, liquidity, capital and market valuation. It is the kind of counterparty and peer review a bank's financial-institutions desk uses for limit setting and strategy. Pick a focus bank to see where it ranks on every metric, switch between Islamic and conventional peers, and click any bar, dot or row to change the focus.</p>
+  <p class="lede">A quarterly benchmark of Syria's listed private banks on size, profitability, efficiency, asset quality, liquidity, capital and market valuation, built from public disclosures and adjusted so that currency revaluation does not masquerade as earnings. It is the peer review a financial-institutions desk uses for counterparty limits and a strategy team uses to see where a bank really stands. Pick a focus bank to see its rank on every metric, switch between Islamic and conventional peers, and click any bar, dot or row to change the focus.</p>
   <ul class="tags"><li>Peer benchmarking</li><li>Credit / FI analysis</li><li>Financial ratios</li><li>DAX (100+ measures)</li><li>Power Query</li><li>Data adjustment methodology</li></ul>
   <div class="note info" role="note"><span aria-hidden="true">ⓘ</span><div><strong>Independent analysis</strong> based solely on banks' <strong>public quarterly disclosures</strong> published by the Syrian Commission on Financial Markets and Securities (SCFMS). Figures are in Syrian pounds (SYP). "Adjusted" figures exclude unrealised structural FX revaluation gains and losses.</div></div>
   <div class="note" role="note"><span aria-hidden="true">⚑</span><div><strong>Coverage:</strong> shows <strong>Q4 2023 – Q4 2024</strong>, the quarters with near-complete disclosure. All 15 banks reported in Q4 2023 – Q3 2024. In Q4 2024, Cham Bank, Syria International Islamic Bank and Syria Gulf Bank had not published, so they are hidden from that quarter. Later quarters were excluded because fewer than three-quarters of banks had reported. Sector growth rates are like-for-like (only banks reporting in both periods).</div></div>
@@ -73,6 +73,14 @@
   </div>
 
   <div class="card panel full">
+    <h2 id="posTitle">Peer positioning profile</h2>
+    <p class="sub" id="posSub"></p>
+    <div class="legend"><span><i class="dot" style="background:var(--good)"></i>Top third of peers</span><span><i class="dot" style="background:var(--accent)"></i>Middle</span><span><i class="dot" style="background:var(--bad)"></i>Bottom third</span><span><i class="dot" style="background:transparent;border:1.5px solid var(--ink-2)"></i>Previous quarter</span><span><i class="ln" style="border-color:var(--axis)"></i>Peer median</span></div>
+    <div class="chart" id="pos"></div>
+    <div class="read" id="posRead"></div>
+  </div>
+
+  <div class="card panel full">
     <h2>Risk vs return</h2>
     <p class="sub" id="scatSub"></p>
     <div class="legend"><span><i class="dot" style="background:var(--s1)"></i>Islamic banks</span><span><i class="dot" style="background:var(--s2)"></i>Conventional banks</span><span>Bubble size = total assets</span></div>
@@ -85,12 +93,28 @@
     <div class="lt-wrap"><table class="lt" id="lt"></table></div>
   </div>
 
+  <h2 class="sechead">How the analysis works</h2>
+  <div class="story">
+    <div class="card"><h3>Business problem</h3><p>Syrian banks hold large structural foreign-currency positions, so when the pound moves, reported profit and equity jump with unrealised revaluation. Ranking banks on reported figures rewards FX exposure, not performance. A counterparty or competitor review needs earnings and capital measured on a comparable basis.</p></div>
+    <div class="card"><h3>Calculations and assumptions</h3><ul>
+      <li><b>Adjusted income and equity</b> exclude unrealised structural-FX revaluation.</li>
+      <li><b>Interim returns are annualised</b> (YTD × 4 ÷ quarter number) so Q1–Q3 compare with a full year.</li>
+      <li><b>Sector benchmarks are aggregates</b> (Σ numerator ÷ Σ denominator), so large banks weigh more; CAR and liquidity use simple averages.</li>
+      <li><b>Growth is like-for-like</b>: only banks reporting in both periods, so a late filer cannot fake a sector decline.</li>
+      <li>Ratios with a non-meaningful base (negative equity, negligible NPLs) are shown as n.m. and left out of rankings.</li></ul></div>
+    <div class="card"><h3>Reading the results</h3><ul>
+      <li>The <b>ranking</b> and <b>trend</b> show where the focus bank sits against the benchmark and whether the gap is opening or closing.</li>
+      <li>The <b>positioning profile</b> condenses ten ratios into strengths and weaknesses, with the direction of travel since last quarter.</li>
+      <li>The <b>risk–return map</b> separates banks earning their return on a clean book from those carrying heavy NPLs.</li>
+      <li>For a limit decision, weak asset quality with thin coverage matters more than size or headline profit.</li></ul></div>
+  </div>
+
   <section class="about">
     <div class="card panel">
       <h2>About this analysis</h2>
       <p><b>Business question:</b> How does each Syrian private bank compare with its peers on scale, profitability, efficiency, credit risk, liquidity and capital, and how is that changing quarter to quarter?</p>
       <p><b>Approach:</b> Quarterly balance sheets, income statements and capital disclosures for 15 banks were compiled into a single dataset, cleaned in Power Query and modelled in Power BI. The original report has 24 pages and more than 100 DAX measures covering market share, rankings, sector benchmarks and A–E ratings. Profit figures are <b>adjusted</b> to strip out unrealised structural FX revaluation, which otherwise dominates Syrian bank earnings when the pound moves.</p>
-      <p><b>What this view adds:</b> any bank can be the focus, Islamic and conventional peer groups, annualised interim returns so quarters are comparable, like-for-like growth rates, a risk–return map, and a sortable league table.</p>
+      <p><b>What this view adds:</b> any bank can be the focus, Islamic and conventional peer groups, annualised interim returns so quarters are comparable, like-for-like growth rates, a peer positioning profile with quarter-on-quarter movement, a risk–return map, and a sortable league table.</p>
       <h2 style="margin-top:14px">Definitions</h2>
       <ul class="def">
         <li><b>ROA / ROE:</b> adjusted net income ÷ total assets / adjusted equity, annualised for Q1–Q3</li>
@@ -287,7 +311,7 @@ function renderRank() {
     txt(g, 0, y + bh / 2, (x.rank ? x.rank + ". " : "") + (narrow ? x.c : lbl(x.c)), { "dominant-baseline": "middle", "font-size": 12, fill: isF ? "var(--ink)" : "var(--ink-2)", "font-weight": isF ? 650 : 400 });
     if (x.v != null) {
       const a = sx(0), b = sx(x.v), fill = isF ? "var(--actual)" : "var(--budget)";
-      el("path", { d: x.v >= 0 ? rr(a, y, b - a, bh, 3) : rl(b, y, a - b, bh, 3), fill, class: "mk" }, g);
+      el("path", { d: x.v >= 0 ? rr(a, y, b - a, bh, 3) : rl(b, y, a - b, bh, 3), fill, class: "mk " + (x.v >= 0 ? "gx" : "gxr"), style: `animation-delay:${i * 18}ms` }, g);
       if ((x.v > hi || x.v < lo)) { const cx = x.v > hi ? sx(hi) - 8 : sx(lo) + 8; el("path", { d: `M${cx - 3},${y - 1} l6,${bh + 2}`, stroke: "var(--surface)", "stroke-width": 3 }, g); }
       txt(g, W, y + bh / 2, fmtv(m, x.v), { "text-anchor": "end", "dominant-baseline": "middle", "font-size": 12, fill: "var(--ink)", "font-weight": isF ? 650 : 500 });
     } else txt(g, x0 + 4, y + bh / 2, "n.m. (not meaningful)", { "dominant-baseline": "middle", "font-size": 11.5, fill: "var(--muted)" });
@@ -350,7 +374,7 @@ function renderTrend() {
   const g = el("g", { "clip-path": `url(#${clipId})` }, svg);
   for (const c in series) if (c !== f) el("path", { d: line(series[c]), fill: "none", stroke: "var(--grid)", "stroke-width": 1.5 }, g);
   el("path", { d: line(bseries), fill: "none", stroke: "var(--ink-2)", "stroke-width": 2, "stroke-dasharray": "5 4" }, g);
-  el("path", { d: line(fv), fill: "none", stroke: "var(--actual)", "stroke-width": 2.5 }, g);
+  el("path", { d: line(fv), fill: "none", stroke: "var(--actual)", "stroke-width": 2.5, class: "wipe" }, g);
   fv.forEach((v, i) => v != null && el("circle", { cx: sx(i), cy: sy(v), r: 4, fill: "var(--actual)", stroke: "var(--surface)", "stroke-width": 2 }, g));
   if (!narrow) {
     const li = fv.length - 1 - [...fv].reverse().findIndex(v => v != null);
@@ -366,6 +390,37 @@ function renderTrend() {
   $("trendTitle").textContent = `${m.l}: ${lbl(f)} vs sector`;
   $("trendFocusLbl").textContent = lbl(f);
   $("trendSub").textContent = `Q4 2023 – Q4 2024 · grey lines = every other reporting bank (outliers beyond the 5th–95th percentile are cut off) · benchmark is recomputed for the banks reporting each quarter`;
+}
+
+/* ---------- peer positioning profile ---------- */
+function renderPos() {
+  const box = $("pos"); box.replaceChildren();
+  const p = state.p, pp = prevPeriod(p), f = state.focus, rows = rowsFor(p), prow = pp ? rowsFor(pp) : [];
+  const ms = M.filter(m => m.b && !m.agg && !m.share), pos = (m, per, rs) => { const R = ranked(m, per, rs), me = R.ok.find(x => x.c === f); return me && R.n > 1 ? { pct: (R.n - me.rank) / (R.n - 1), rank: me.rank, n: R.n, v: me.v } : null; };
+  const list = ms.map(m => ({ m, now: pos(m, p, rows), was: pp && prow.find(r => r.c === f) ? pos(m, pp, prow) : null }));
+  const W = Math.max(300, box.clientWidth), narrow = W < 560, labelW = narrow ? 118 : 200, valW = narrow ? 64 : 170, rowH = 30, top = 20, bottom = 8, H = top + rowH * list.length + bottom;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Percentile position of the focus bank on each ratio" }, box), x0 = labelW, x1 = W - valW, sx = v => x0 + (x1 - x0) * v;
+  el("rect", { x: sx(0), y: top - 4, width: sx(1 / 3) - sx(0), height: H - top - bottom + 4, fill: "var(--bad)", opacity: .06 }, svg); el("rect", { x: sx(2 / 3), y: top - 4, width: sx(1) - sx(2 / 3), height: H - top - bottom + 4, fill: "var(--good)", opacity: .07 }, svg);
+  el("line", { x1: sx(.5), x2: sx(.5), y1: top - 4, y2: H - bottom, stroke: "var(--axis)", "stroke-dasharray": "3 3" }, svg);
+  txt(svg, sx(0), 10, "← weakest in peer group", { "font-size": 11, fill: "var(--muted)" }); txt(svg, sx(1), 10, "strongest →", { "font-size": 11, fill: "var(--muted)", "text-anchor": "end" }); if (!narrow) txt(svg, sx(.5), 10, "median", { "font-size": 11, fill: "var(--muted)", "text-anchor": "middle" });
+  list.forEach((o, i) => {
+    const y = top + i * rowH + rowH / 2, g = el("g", { class: "hit", tabindex: 0, role: "button", "aria-label": `${o.m.l}: ${o.now ? "rank " + o.now.rank + " of " + o.now.n : "not meaningful"}` }, svg);
+    el("rect", { x: 0, y: y - rowH / 2, width: W, height: rowH, fill: o.m.k === state.metric ? "var(--accent)" : "transparent", opacity: o.m.k === state.metric ? .07 : 1 }, g);
+    txt(g, 0, y, o.m.l.replace(" (annualised)", ""), { "dominant-baseline": "middle", "font-size": 12, fill: "var(--ink)" });
+    el("line", { x1: x0, x2: x1, y1: y, y2: y, stroke: "var(--grid)", "stroke-width": 2, "stroke-linecap": "round" }, g);
+    if (!o.now) { txt(g, x0 + 6, y - 9, "n.m.", { "font-size": 10.5, fill: "var(--muted)" }); return; }
+    const col = o.now.pct >= 2 / 3 ? "var(--good)" : o.now.pct <= 1 / 3 ? "var(--bad)" : "var(--accent)";
+    if (o.was) { el("line", { x1: sx(o.was.pct), x2: sx(o.now.pct), y1: y, y2: y, stroke: col, "stroke-width": 2.5, opacity: .45, class: "fade" }, g); el("circle", { cx: sx(o.was.pct), cy: y, r: 4.5, fill: "var(--surface)", stroke: "var(--ink-2)", "stroke-width": 1.5 }, g); }
+    el("circle", { cx: sx(o.now.pct), cy: y, r: 7, fill: col, stroke: "var(--surface)", "stroke-width": 2, class: "mk pop", style: `animation-delay:${i * 35}ms` }, g);
+    const d = o.was ? o.was.rank - o.now.rank : 0;
+    txt(g, W, y, `${narrow ? "" : fmtv(o.m, o.now.v) + " · "}${o.now.rank}/${o.now.n}${o.was && d ? (d > 0 ? " ▲" : " ▼") + Math.abs(d) : ""}`, { "text-anchor": "end", "dominant-baseline": "middle", "font-size": 12, fill: "var(--ink)", "font-weight": 600 });
+    bindTip(g, () => [`${o.m.l} · ${lbl(f)}`, [{ label: p, value: `${fmtv(o.m, o.now.v)} · rank ${o.now.rank} of ${o.now.n}` }, ...(o.was ? [{ label: pp, value: `${fmtv(o.m, o.was.v)} · rank ${o.was.rank} of ${o.was.n}` }, { label: "Rank change", value: d === 0 ? "unchanged" : `${d > 0 ? "up" : "down"} ${Math.abs(d)}`, cls: d > 0 ? "up" : d < 0 ? "down" : "" }] : []), { label: "Better when", value: o.m.b === "low" ? "lower" : "higher" }]]);
+    onActivate(g, () => { state.metric = o.m.k; render(); });
+  });
+  const ok = list.filter(o => o.now), topN = ok.filter(o => o.now.pct >= 2 / 3), bot = ok.filter(o => o.now.pct <= 1 / 3), mv = ok.filter(o => o.was).map(o => ({ o, d: o.was.rank - o.now.rank })).sort((a, b) => Math.abs(b.d) - Math.abs(a.d))[0];
+  $("posTitle").textContent = `Peer positioning profile: ${lbl(f)}`;
+  $("posSub").textContent = `${p}${pp ? " vs " + pp : ""} · position among ${state.grp === "all" ? "all" : state.grp === "isl" ? "Islamic" : "conventional"} reporting banks on each ratio, re-based so that right is always better · click a row to chart that metric`;
+  $("posRead").replaceChildren(h("b", { text: "Profile: " }), document.createTextNode(`${lbl(f)} sits in the top third of peers on ${topN.length} of ${ok.length} ratios${topN.length ? " (" + topN.slice(0, 4).map(o => o.m.l.replace(" (annualised)", "")).join(", ") + ")" : ""} and in the bottom third on ${bot.length}${bot.length ? " (" + bot.slice(0, 4).map(o => o.m.l.replace(" (annualised)", "")).join(", ") + ")" : ""}.` + (mv && mv.d ? ` The largest move since ${pp} is ${mv.o.m.l.replace(" (annualised)", "")}, ${mv.d > 0 ? "up" : "down"} ${Math.abs(mv.d)} place${Math.abs(mv.d) > 1 ? "s" : ""}.` : pp ? " Rankings are unchanged since the previous quarter." : "") + " A rank is relative: a bank can improve its own ratio and still lose places if peers improved faster."));
 }
 
 /* ---------- scatter ---------- */
@@ -385,7 +440,7 @@ function renderScatter() {
     const isF = o.c === state.focus, col = ISL.has(o.c) ? "var(--s1)" : "var(--s2)";
     const g = el("g", { class: "hit", tabindex: 0, role: "button", "aria-label": `${lbl(o.c)}: NPL ${pctP(o.x)}, ROA ${pctP(o.y, 2)}` }, svg);
     el("circle", { cx: sx(o.x), cy: sy(o.y), r: Math.max(12, rad(o.s)), fill: "transparent" }, g);
-    el("circle", { cx: sx(o.x), cy: sy(o.y), r: rad(o.s), fill: col, "fill-opacity": isF ? .95 : .55, stroke: isF ? "var(--ink)" : "var(--surface)", "stroke-width": isF ? 2.5 : 1.5, class: "mk" }, g);
+    el("circle", { cx: sx(o.x), cy: sy(o.y), r: rad(o.s), fill: col, "fill-opacity": isF ? .95 : .55, stroke: isF ? "var(--ink)" : "var(--surface)", "stroke-width": isF ? 2.5 : 1.5, class: "mk pop" }, g);
     o.g = g; o.isF = isF;
     bindTip(g, () => [`${lbl(o.c)} · ${p}`, [{ label: "NPL ratio", value: pctP(o.x) }, { label: "Adj. ROA", value: pctP(o.y, 2) }, { label: "Total assets", value: compact(o.s, "SYP ") }, { label: "Type", value: ISL.has(o.c) ? "Islamic" : "Conventional" }]]);
     onActivate(g, () => setFocus(o.c));
@@ -442,8 +497,9 @@ function renderLeague() {
   $("ltSub").textContent = `${p} · ${rows.length} banks · click a column header to sort, or a row to focus that bank · n.m. = not meaningful (e.g. negative equity)`;
 }
 
-function render() { syncControls(); renderKPIs(); renderInsights(); renderRank(); renderScorecard(); renderTrend(); renderScatter(); renderLeague(); }
+function render() { syncControls(); renderKPIs(); renderInsights(); renderRank(); renderScorecard(); renderTrend(); renderPos(); renderScatter(); renderLeague(); }
 build(); ensureFocus(); render(); onResize(render);
 </script>
+<script src="../../assets/motion.js"></script>
 </body>
 </html>
